@@ -151,7 +151,7 @@ const GET_BIRTH_REGISTRATION_FOR_REVIEW = gql`
         contactEmail
         certificates {
           hasShowedVerifiedDocument
-          certTemplateId
+          certificateTemplateId
           collector {
             relationship
             otherRelationship
@@ -225,7 +225,7 @@ const GET_BIRTH_REGISTRATION_FOR_REVIEW = gql`
         requesterOther
         noSupportingDocumentationRequired
         hasShowedVerifiedDocument
-        certTemplateId
+        certificateTemplateId
         date
         action
         regStatus
@@ -314,7 +314,7 @@ const GET_BIRTH_REGISTRATION_FOR_REVIEW = gql`
         }
         certificates {
           hasShowedVerifiedDocument
-          certTemplateId
+          certificateTemplateId
           collector {
             relationship
             otherRelationship
@@ -591,7 +591,7 @@ export const GET_BIRTH_REGISTRATION_FOR_CERTIFICATE = gql`
         }
         certificates {
           hasShowedVerifiedDocument
-          certTemplateId
+          certificateTemplateId
           collector {
             relationship
             otherRelationship
