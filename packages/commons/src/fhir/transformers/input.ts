@@ -208,7 +208,7 @@ interface Certificate {
   collector?: RelatedPerson
   hasShowedVerifiedDocument?: boolean
   payments?: Array<Payment | null>
-  certificateTemplateId?: string
+  certificateTemplateId: string
 }
 interface Deceased {
   deceased?: boolean
