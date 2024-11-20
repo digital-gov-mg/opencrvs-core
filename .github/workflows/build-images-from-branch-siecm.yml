@@ -166,10 +166,10 @@ jobs:
     - name: Diff Trivy results to catch newly introduced vulnerabilities
       run: diff -u ./trivy-results-base.sarif ./trivy-results-branch.sarif
 
-  security-scans-develop:
+  security-scans-prod:
     needs: [ build, base ]
     runs-on: ubuntu-22.04
-    if: ${{ needs.base.outputs.branch == 'develop' }}
+    if: ${{ needs.base.outputs.branch == 'prod' }}
     strategy:
       fail-fast: false
       matrix:
