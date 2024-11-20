@@ -1,0 +1,134 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# OpenCRVS is also distributed under the terms of the Civil Registration
+# & Healthcare Disclaimer located at http://opencrvs.org/license.
+#
+# Copyright (C) The OpenCRVS Authors located at https://github.com/opencrvs/opencrvs-core/blob/master/AUTHORS.
+name: Publish images to Dockerhub from any branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: Branch to build from
+        default: prod
+        required: true
+  pull_request:
+    branches:
+    - prod
+  push:
+    branches:
+    - prod
+
+jobs:
+  base:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: '${{ github.event.inputs.branch_name }}'
+
+    - uses: actions/checkout@v4
+      if: github.event_name == 'push'
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - uses: actions/checkout@v4
+      if: github.event_name == 'pull_request'
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Set version and branch
+      id: set-version-and-branch
+      run: |
+        export VERSION=`git log -1 --pretty=format:%h`
+        echo "Pushing version $VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        if [ "${{ github.event_name }}" == 'push' ]; then
+        BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+        elif [ "${{ github.event_name }}" == 'pull_request' ]; then
+        BRANCH=${{ github.event.pull_request.head.ref }}
+        else
+        BRANCH=${{ inputs.branch_name }}
+        fi
+        ESCAPED_BRANCH=$(echo $BRANCH | sed 's/[^a-zA-Z0-9_.-]/-/g')
+        echo "from branch $BRANCH"
+        echo "branch=$ESCAPED_BRANCH" >> $GITHUB_OUTPUT
+
+    - name: Get list of services
+      id: get-services
+      run: |
+        services=$(grep "^  [^ ]" docker-compose.yml | grep -v base| grep -v '#' | awk -F: '{print $1}' | sed -e 's/^ *//')
+        services_json=$(echo $services | tr '\n' ',' | sed 's/,$//' | jq -R 'split(" ")' | tr -d '\n')
+        # Set the list of service names as an output variable
+        echo "services=$services_json" >> $GITHUB_OUTPUT
+        echo "services=$services_json"
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+    - name: Build and push base image
+      uses: docker/build-push-action@v6
+      with:
+        file: packages/Dockerfile.base
+        context: .
+        push: true
+        tags: |
+          siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.version }}
+          siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.branch }}
+        cache-from: type=registry,ref=siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.branch }}
+        cache-to: type=inline
+
+    outputs:
+      services: ${{ steps.get-services.outputs.services }}
+      version: ${{ steps.set-version-and-branch.outputs.version }}
+      branch: ${{ steps.set-version-and-branch.outputs.branch }}
+
+  build:
+    needs: base
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.base.outputs.services) }}
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: '${{ github.event.inputs.branch_name }}'
+
+    - uses: actions/checkout@v4
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        file: packages/${{ matrix.service }}/Dockerfile
+        build-args: |
+          VERSION=${{ needs.base.outputs.version }}
+          BRANCH=${{ needs.base.outputs.branch }}
+        push: true
+        context: .
+        tags: |
+          siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.version }}
+          siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
+        cache-from: type=registry,ref=siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
+        cache-to: type=inline
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@0.24.0
+      with:
+        image-ref: 'siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.version }}'
+        trivy-config: trivy.yaml

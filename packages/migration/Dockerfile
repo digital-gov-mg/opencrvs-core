@@ -1,5 +1,5 @@
-ARG  VERSION=dev
-FROM opencrvs/ocrvs-base:${VERSION}
+ARG  VERSION=prod
+FROM siecm/ocrvs-core:base-${VERSION}
 
 USER node
 
