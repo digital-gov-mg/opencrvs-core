@@ -13,78 +13,79 @@ on:
     inputs:
       branch_name:
         description: Branch to build from
-        default: develop
+        default: prod
         required: true
   pull_request:
-    branches-ignore:
-      - 'dependabot/**'
-      - 'renovate/**'
+    branches:
+    - prod
+    # branches-ignore:
+    # - 'dependabot/**'
+    # - 'renovate/**'
   push:
     branches:
-      - develop
-      - main
+    - prod
 jobs:
   base:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-        if: github.event_name == 'workflow_dispatch'
-        with:
-          ref: '${{ github.event.inputs.branch_name }}'
+    - uses: actions/checkout@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: '${{ github.event.inputs.branch_name }}'
 
-      - uses: actions/checkout@v4
-        if: github.event_name == 'push'
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+    - uses: actions/checkout@v4
+      if: github.event_name == 'push'
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: actions/checkout@v4
-        if: github.event_name == 'pull_request'
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+    - uses: actions/checkout@v4
+      if: github.event_name == 'pull_request'
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Set version and branch
-        id: set-version-and-branch
-        run: |
-          export VERSION=`git log -1 --pretty=format:%h`
-          echo "Pushing version $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          if [ "${{ github.event_name }}" == 'push' ]; then
-          BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
-          elif [ "${{ github.event_name }}" == 'pull_request' ]; then
-          BRANCH=${{ github.event.pull_request.head.ref }}
-          else
-          BRANCH=${{ inputs.branch_name }}
-          fi
-          ESCAPED_BRANCH=$(echo $BRANCH | sed 's/[^a-zA-Z0-9_.-]/-/g')
-          echo "from branch $BRANCH"
-          echo "branch=$ESCAPED_BRANCH" >> $GITHUB_OUTPUT
+    - name: Set version and branch
+      id: set-version-and-branch
+      run: |
+        export VERSION=`git log -1 --pretty=format:%h`
+        echo "Pushing version $VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        if [ "${{ github.event_name }}" == 'push' ]; then
+        BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+        elif [ "${{ github.event_name }}" == 'pull_request' ]; then
+        BRANCH=${{ github.event.pull_request.head.ref }}
+        else
+        BRANCH=${{ inputs.branch_name }}
+        fi
+        ESCAPED_BRANCH=$(echo $BRANCH | sed 's/[^a-zA-Z0-9_.-]/-/g')
+        echo "from branch $BRANCH"
+        echo "branch=$ESCAPED_BRANCH" >> $GITHUB_OUTPUT
 
-      - name: Get list of services
-        id: get-services
-        run: |
-          services=$(grep "^  [^ ]" docker-compose.yml | grep -v base| grep -v '#' | awk -F: '{print $1}' | sed -e 's/^ *//')
-          services_json=$(echo $services | tr '\n' ',' | sed 's/,$//' | jq -R 'split(" ")' | tr -d '\n')
-          # Set the list of service names as an output variable
-          echo "services=$services_json" >> $GITHUB_OUTPUT
-          echo "services=$services_json"
+    - name: Get list of services
+      id: get-services
+      run: |
+        services=$(grep "^  [^ ]" docker-compose.yml | grep -v base| grep -v '#' | awk -F: '{print $1}' | sed -e 's/^ *//')
+        services_json=$(echo $services | tr '\n' ',' | sed 's/,$//' | jq -R 'split(" ")' | tr -d '\n')
+        # Set the list of service names as an output variable
+        echo "services=$services_json" >> $GITHUB_OUTPUT
+        echo "services=$services_json"
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push base image
-        uses: docker/build-push-action@v6
-        with:
-          file: packages/Dockerfile.base
-          context: .
-          push: true
-          tags: |
-            opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.version }}
-            opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}
-          cache-from: type=registry,ref=opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}
-          cache-to: type=inline
+    - name: Build and push base image
+      uses: docker/build-push-action@v6
+      with:
+        file: packages/Dockerfile.base
+        context: .
+        push: true
+        tags: |
+          opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.version }}
+          opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}
+        cache-from: type=registry,ref=opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}
+        cache-to: type=inline
 
     outputs:
       services: ${{ steps.get-services.outputs.services }}
@@ -99,77 +100,77 @@ jobs:
         service: ${{ fromJSON(needs.base.outputs.services) }}
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-        if: github.event_name == 'workflow_dispatch'
-        with:
-          ref: '${{ github.event.inputs.branch_name }}'
+    - uses: actions/checkout@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: '${{ github.event.inputs.branch_name }}'
 
-      - uses: actions/checkout@v4
-        if: github.event_name == 'push' || github.event_name == 'pull_request'
+    - uses: actions/checkout@v4
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          file: packages/${{ matrix.service }}/Dockerfile
-          build-args: |
-            VERSION=${{ needs.base.outputs.version }}
-            BRANCH=${{ needs.base.outputs.branch }}
-          push: true
-          context: .
-          tags: |
-            opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}
-            opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
-          cache-from: type=registry,ref=opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
-          cache-to: type=inline
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        file: packages/${{ matrix.service }}/Dockerfile
+        build-args: |
+          VERSION=${{ needs.base.outputs.version }}
+          BRANCH=${{ needs.base.outputs.branch }}
+        push: true
+        context: .
+        tags: |
+          opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}
+          opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
+        cache-from: type=registry,ref=opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
+        cache-to: type=inline
 
   security-scans-pr:
-    needs: [build, base]
+    needs: [ build, base ]
     runs-on: ubuntu-22.04
     if: github.event_name == 'pull_request'
     strategy:
       matrix:
         service: ${{ fromJSON(needs.base.outputs.services) }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            trivy.yaml
-            .trivyignore.yaml
-          sparse-checkout-cone-mode: false
-      - name: Gather Trivy output from base branch image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ github.event.pull_request.base.ref }}'
-          trivy-config: trivy.yaml
-          format: 'sarif'
-          output: './trivy-results-base.sarif'
-          exit-code: '0'
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          trivy.yaml
+          .trivyignore.yaml
+        sparse-checkout-cone-mode: false
+    - name: Gather Trivy output from base branch image
+      uses: aquasecurity/trivy-action@0.28.0
+      with:
+        image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ github.event.pull_request.base.ref }}'
+        trivy-config: trivy.yaml
+        format: 'sarif'
+        output: './trivy-results-base.sarif'
+        exit-code: '0'
 
-      - name: Gather Trivy output from newly build image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
-          trivy-config: trivy.yaml
-          format: 'sarif'
-          output: './trivy-results-branch.sarif'
-          exit-code: '0'
+    - name: Gather Trivy output from newly build image
+      uses: aquasecurity/trivy-action@0.28.0
+      with:
+        image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
+        trivy-config: trivy.yaml
+        format: 'sarif'
+        output: './trivy-results-branch.sarif'
+        exit-code: '0'
 
-      - name: Remove lines that are always expected to be different
-        run: |
-          jq '.runs |= map(del(.originalUriBaseIds, .properties))' ${{ github.workspace }}/trivy-results-base.sarif > ${{ github.workspace }}/trivy-results-base.sarif
-          jq '.runs |= map(del(.originalUriBaseIds, .properties))' ${{ github.workspace }}/trivy-results-branch.sarif > ${{ github.workspace }}/trivy-results-branch.sarif
+    - name: Remove lines that are always expected to be different
+      run: |
+        jq '.runs |= map(del(.originalUriBaseIds, .properties))' ${{ github.workspace }}/trivy-results-base.sarif > ${{ github.workspace }}/trivy-results-base.sarif
+        jq '.runs |= map(del(.originalUriBaseIds, .properties))' ${{ github.workspace }}/trivy-results-branch.sarif > ${{ github.workspace }}/trivy-results-branch.sarif
 
-      - name: Diff Trivy results to catch newly introduced vulnerabilities
-        run: diff -u ./trivy-results-base.sarif ./trivy-results-branch.sarif
+    - name: Diff Trivy results to catch newly introduced vulnerabilities
+      run: diff -u ./trivy-results-base.sarif ./trivy-results-branch.sarif
 
   security-scans-develop:
-    needs: [build, base]
+    needs: [ build, base ]
     runs-on: ubuntu-22.04
     if: ${{ needs.base.outputs.branch == 'develop' }}
     strategy:
@@ -177,15 +178,15 @@ jobs:
       matrix:
         service: ${{ fromJSON(needs.base.outputs.services) }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            trivy.yaml
-            .trivyignore.yaml
-          sparse-checkout-cone-mode: false
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          trivy.yaml
+          .trivyignore.yaml
+        sparse-checkout-cone-mode: false
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
-          trivy-config: trivy.yaml
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@0.28.0
+      with:
+        image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
+        trivy-config: trivy.yaml
