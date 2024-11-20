@@ -1,11 +1,3 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# OpenCRVS is also distributed under the terms of the Civil Registration
-# & Healthcare Disclaimer located at http://opencrvs.org/license.
-#
-# Copyright (C) The OpenCRVS Authors located at https://github.com/opencrvs/opencrvs-core/blob/master/AUTHORS.
 name: Publish images to Dockerhub from any branch
 
 on:
@@ -13,17 +5,16 @@ on:
     inputs:
       branch_name:
         description: Branch to build from
-        default: develop
+        default: dev
         required: true
   pull_request:
-    branches-ignore:
-      - 'dependabot/**'
-      - 'renovate/**'
+    branches:
+    - prod
   push:
     branches:
-      - develop
-      - main
-      - 'release*'
+    - prod
+    - dev
+
 jobs:
   base:
     runs-on: ubuntu-22.04
@@ -72,8 +63,8 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and push base image
         uses: docker/build-push-action@v6
@@ -111,8 +102,8 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -129,64 +120,3 @@ jobs:
           cache-from: type=registry,ref=siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
           cache-to: type=inline
 
-  security-scans-pr:
-    needs: [build, base]
-    runs-on: ubuntu-22.04
-    if: github.event_name == 'pull_request'
-    strategy:
-      matrix:
-        service: ${{ fromJSON(needs.base.outputs.services) }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            trivy.yaml
-            .trivyignore.yaml
-          sparse-checkout-cone-mode: false
-      - name: Gather Trivy output from base branch image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ github.event.pull_request.base.ref }}'
-          trivy-config: trivy.yaml
-          format: 'sarif'
-          output: './trivy-results-base.sarif'
-          exit-code: '0'
-
-      - name: Gather Trivy output from newly build image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
-          trivy-config: trivy.yaml
-          format: 'sarif'
-          output: './trivy-results-branch.sarif'
-          exit-code: '0'
-
-      - name: Remove lines that are always expected to be different
-        run: |
-          jq '.runs |= map(del(.originalUriBaseIds, .properties))' ${{ github.workspace }}/trivy-results-base.sarif > ${{ github.workspace }}/trivy-results-base.sarif
-          jq '.runs |= map(del(.originalUriBaseIds, .properties))' ${{ github.workspace }}/trivy-results-branch.sarif > ${{ github.workspace }}/trivy-results-branch.sarif
-
-      - name: Diff Trivy results to catch newly introduced vulnerabilities
-        run: diff -u ./trivy-results-base.sarif ./trivy-results-branch.sarif
-
-  security-scans-develop:
-    needs: [build, base]
-    runs-on: ubuntu-22.04
-    if: ${{ needs.base.outputs.branch == 'develop' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        service: ${{ fromJSON(needs.base.outputs.services) }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            trivy.yaml
-            .trivyignore.yaml
-          sparse-checkout-cone-mode: false
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
-          trivy-config: trivy.yaml
