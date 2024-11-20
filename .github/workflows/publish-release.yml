@@ -67,8 +67,8 @@ jobs:
           context: .
           push: true
           tags: |
-            opencrvs/ocrvs-base:${{ steps.set-version.outputs.version }}
-          cache-from: type=registry,ref=opencrvs/ocrvs-base:${{ steps.set-version.outputs.version }}
+            siecm/ocrvs-core:${{ steps.set-version.outputs.version }}
+          cache-from: type=registry,ref=siecm/ocrvs-core:${{ steps.set-version.outputs.version }}
           cache-to: type=inline
 
     outputs:
@@ -106,8 +106,8 @@ jobs:
           push: true
           context: .
           tags: |
-            opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}
-          cache-from: type=registry,ref=opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version}}
+            siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}
+          cache-from: type=registry,ref=siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version}}
           cache-to: type=inline
 
   security-scans:
@@ -128,5 +128,5 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
+          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
           trivy-config: trivy.yaml
