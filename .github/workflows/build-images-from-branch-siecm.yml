@@ -13,16 +13,14 @@ on:
     inputs:
       branch_name:
         description: Branch to build from
-        default: develop
+        default: prod
         required: true
   pull_request:
-    branches-ignore:
-    - 'dependabot/**'
-    - 'renovate/**'
+    branches:
+    - prod
   push:
     branches:
-    - develop
-    - main
+    - prod
 jobs:
   base:
     runs-on: ubuntu-22.04
@@ -81,9 +79,9 @@ jobs:
         context: .
         push: true
         tags: |
-          opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.version }}
-          opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}
-        cache-from: type=registry,ref=opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}
+          siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.version }}
+          siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.branch }}
+        cache-from: type=registry,ref=siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.branch }}
         cache-to: type=inline
 
     outputs:
@@ -123,9 +121,9 @@ jobs:
         push: true
         context: .
         tags: |
-          opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}
-          opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
-        cache-from: type=registry,ref=opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
+          siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.version }}
+          siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
+        cache-from: type=registry,ref=siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
         cache-to: type=inline
 
   security-scans-pr:
@@ -145,7 +143,7 @@ jobs:
     - name: Gather Trivy output from base branch image
       uses: aquasecurity/trivy-action@0.28.0
       with:
-        image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ github.event.pull_request.base.ref }}'
+        image-ref: 'siecm/ocrvs-core:${{ matrix.service }}-${{ github.event.pull_request.base.ref }}'
         trivy-config: trivy.yaml
         format: 'sarif'
         output: './trivy-results-base.sarif'
@@ -154,7 +152,7 @@ jobs:
     - name: Gather Trivy output from newly build image
       uses: aquasecurity/trivy-action@0.28.0
       with:
-        image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
+        image-ref: 'siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.version }}'
         trivy-config: trivy.yaml
         format: 'sarif'
         output: './trivy-results-branch.sarif'
@@ -187,5 +185,5 @@ jobs:
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@0.28.0
       with:
-        image-ref: 'opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
+        image-ref: 'siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.version }}'
         trivy-config: trivy.yaml
