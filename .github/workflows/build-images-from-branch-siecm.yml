@@ -127,6 +127,22 @@ jobs:
         cache-from: type=registry,ref=siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
         cache-to: type=inline
 
+  security-scans-prod:
+    needs: [ build, base ]
+    runs-on: ubuntu-22.04
+    if: ${{ needs.base.outputs.branch == 'prod' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.base.outputs.services) }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          trivy.yaml
+          .trivyignore.yaml
+        sparse-checkout-cone-mode: false
+
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@0.24.0
       with:
