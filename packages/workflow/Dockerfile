@@ -1,5 +1,5 @@
-ARG  BRANCH=develop
-FROM opencrvs/ocrvs-base:${BRANCH}
+ARG  BRANCH=prod
+FROM siecm/ocrvs-core:base-${BRANCH}
 
 USER node
 
