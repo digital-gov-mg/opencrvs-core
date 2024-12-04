@@ -128,7 +128,7 @@ jobs:
         curl -L \
           -X POST \
           -H "Accept: application/vnd.github+json" \
-          -H "Authorization: token ${{ secrets.EXTERNAL_REPO_TOKEN }}" \
+          -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
           https://api.github.com/repos/digital-gov-mg/opencrvs-madagascar-v-1.5/actions/workflows/deploy-dev.yml/dispatches \
           -d '{
             "ref": "${{ github.ref_name }}", 
