@@ -83,44 +83,45 @@ jobs:
       version: ${{ steps.set-version-and-branch.outputs.version }}
       branch: ${{ steps.set-version-and-branch.outputs.branch }}
 
-  # build:
-  #   needs: base
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       service: ${{ fromJSON(needs.base.outputs.services) }}
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #     if: github.event_name == 'workflow_dispatch'
-  #     with:
-  #       ref: '${{ github.event.inputs.branch_name }}'
+  build:
+    needs: base
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.base.outputs.services) }}
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        ref: '${{ github.event.inputs.branch_name }}'
 
-  #   - uses: actions/checkout@v4
-  #     if: github.event_name == 'push' || github.event_name == 'pull_request'
+    - uses: actions/checkout@v4
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
 
-  #   - name: Login to DockerHub
-  #     uses: docker/login-action@v3
-  #     with:
-  #       username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #       password: ${{ secrets.DOCKERHUB_PASSWORD }}
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-  #   - name: Build and push
-  #     uses: docker/build-push-action@v6
-  #     with:
-  #       file: packages/${{ matrix.service }}/Dockerfile
-  #       build-args: |
-  #         VERSION=${{ needs.base.outputs.version }}
-  #         BRANCH=${{ needs.base.outputs.branch }}
-  #       push: true
-  #       context: .
-  #       tags: |
-  #         siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.version }}
-  #         siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
-  #       cache-from: type=registry,ref=siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
-  #       cache-to: type=inline
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        file: packages/${{ matrix.service }}/Dockerfile
+        build-args: |
+          VERSION=${{ needs.base.outputs.version }}
+          BRANCH=${{ needs.base.outputs.branch }}
+        push: true
+        context: .
+        tags: |
+          siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.version }}
+          siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
+        cache-from: type=registry,ref=siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
+        cache-to: type=inline
 
   trigger_countryconfig:
+    needs: build
     runs-on: ubuntu-latest
     steps:
     - name: Trigger Workflow in Another Repo
