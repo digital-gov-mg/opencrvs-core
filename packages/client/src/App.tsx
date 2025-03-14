@@ -71,6 +71,7 @@ import { ReviewCorrection } from './views/ReviewCorrection/ReviewCorrection'
 import { ReviewCertificate } from './views/PrintCertificate/ReviewCertificateAction'
 import AllUserEmail from './views/SysAdmin/Communications/AllUserEmail/AllUserEmail'
 import { ReloadModal } from './views/Modals/ReloadModal'
+import { useAdvancedFrontendCustomizations } from './hooks/useAdvancedFrontendCustomizations'
 
 interface IAppProps {
   client?: ApolloClient<NormalizedCacheObject>
@@ -92,6 +93,11 @@ const GlobalStyle = createGlobalStyle`
     overflow-y: scroll;
   }
 `
+/** Global load frontend customizations */
+const AdvancedCustomizationsComponent = () => {
+  useAdvancedFrontendCustomizations()
+  return null;
+}
 
 export function App(props: IAppProps) {
   const { client } = useApolloClient(props.store)
@@ -110,6 +116,7 @@ export function App(props: IAppProps) {
                       <Switch>
                         <Route>
                           <ReloadModal />
+                          <AdvancedCustomizationsComponent />
                           <Page>
                             <MainSection>
                               <ProtectedPage
