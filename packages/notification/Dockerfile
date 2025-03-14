@@ -1,5 +1,5 @@
 ARG  VERSION=dev
-FROM opencrvs/ocrvs-base:${VERSION}
+FROM siecm/ocrvs-base:${VERSION}
 
 USER node
 
