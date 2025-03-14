@@ -74,7 +74,8 @@ jobs:
         push: true
         tags: |
           siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.version }}
-          siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.branch }}
+          siecm/ocrvs-core:base-fork-release-v1.6.0
+          # siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.branch }}
         cache-from: type=registry,ref=siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.branch }}
         cache-to: type=inline
 
@@ -116,8 +117,9 @@ jobs:
         context: .
         tags: |
           siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.version }}
-          siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
-        cache-from: type=registry,ref=siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
+          siecm/ocrvs-core:${{ matrix.service }}-fork-release-v1.6.0
+          # siecm/ocrvs-core:${{ matrix.service }}-${{ needs.base.outputs.branch }}
+        cache-from: type=registry,ref=siecm/ocrvs-core:${{ matrix.service }}-fork-release-v1.6.0
         cache-to: type=inline
 
   # trigger_countryconfig:
