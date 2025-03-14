@@ -73,8 +73,8 @@ jobs:
         context: .
         push: true
         tags: |
-          siecm/ocrvs:base-${{ steps.set-version-and-branch.outputs.version }}
-          siecm/ocrvs:base-fork-release-v1.6.0
+          siecm/ocrvs-base:${{ steps.set-version-and-branch.outputs.version }}
+          siecm/ocrvs-base:fork-release-v1.6.0
         cache-from: type=registry,ref=siecm/ocrvs-core:base-${{ steps.set-version-and-branch.outputs.branch }}
         cache-to: type=inline
 
