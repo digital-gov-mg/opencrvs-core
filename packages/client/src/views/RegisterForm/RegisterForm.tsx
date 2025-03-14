@@ -81,7 +81,8 @@ import {
   getSectionFields,
   getNextSectionIds,
   VIEW_TYPE,
-  handleInitialValue
+  handleInitialValue,
+  evalExpressionInFieldDefinition
 } from '@client/forms/utils'
 import { messages } from '@client/i18n/messages/views/register'
 import { duplicateMessages } from '@client/i18n/messages/views/duplicates'
@@ -217,7 +218,8 @@ function FormAppBar({
   duplicate,
   modifyDeclarationMethod,
   deleteDeclarationMethod,
-  printDeclarationMethod
+  printDeclarationMethod,
+  canSaveAndExit
 }: {
   duplicate: boolean | undefined
   section: IFormSection
@@ -225,6 +227,7 @@ function FormAppBar({
   modifyDeclarationMethod: (declration: IDeclaration) => void
   deleteDeclarationMethod: (declration: IDeclaration) => void
   printDeclarationMethod: (declarationId: string) => void
+  canSaveAndExit: boolean
 }) {
   const intl = useIntl()
   const dispatch = useDispatch()
@@ -544,6 +547,7 @@ function FormAppBar({
                     id="save-exit-btn"
                     type="primary"
                     size="small"
+                    disabled={!canSaveAndExit}
                     onClick={handleSaveAndExit}
                   >
                     <Icon name="DownloadSimple" />
@@ -602,7 +606,12 @@ function FormAppBar({
             mobileRight={
               <>
                 {!isCorrection(declaration) && (
-                  <Button type="icon" size="small" onClick={handleSaveAndExit}>
+                  <Button
+                    type="icon"
+                    size="small"
+                    disabled={!canSaveAndExit}
+                    onClick={handleSaveAndExit}
+                  >
                     <Icon name="DownloadSimple" />
                   </Button>
                 )}
@@ -996,7 +1005,8 @@ class RegisterFormView extends React.Component<FullProps, State> {
       activeSection,
       activeSectionGroup,
       reviewSummaryHeader,
-      userDetails
+      userDetails,
+      config
     } = this.props
 
     const nextSectionGroup = getNextSectionIds(
@@ -1012,6 +1022,17 @@ class RegisterFormView extends React.Component<FullProps, State> {
     const isDocumentUploadPage = this.props.match.params.pageId === 'documents'
     const introSection =
       findFirstVisibleSection(registerForm.sections).id === activeSection.id
+    const canContinue =
+      'canContinue' in activeSection
+        ? evalExpressionInFieldDefinition(
+            activeSection.canContinue!,
+            declaration.data[activeSection.id],
+            config,
+            declaration.data,
+            userDetails
+          )
+        : true
+
     return (
       <>
         <TimeMounted
@@ -1028,6 +1049,7 @@ class RegisterFormView extends React.Component<FullProps, State> {
               modifyDeclarationMethod={this.props.modifyDeclaration}
               deleteDeclarationMethod={this.onDeleteDeclaration}
               printDeclarationMethod={this.props.goToPrintRecord}
+              canSaveAndExit={canContinue}
             />
           }
           key={activeSection.id}
@@ -1093,6 +1115,7 @@ class RegisterFormView extends React.Component<FullProps, State> {
                             type="tertiary"
                             size="small"
                             onClick={this.props.goBack}
+                            disabled={!canContinue}
                           >
                             <Icon name="ArrowLeft" size="medium" />
                             {intl.formatMessage(buttonMessages.back)}
@@ -1131,7 +1154,9 @@ class RegisterFormView extends React.Component<FullProps, State> {
                                     declaration.event.toLowerCase()
                                   )
                                 }}
-                                disabled={this.state.isFileUploading}
+                                disabled={
+                                  !canContinue || this.state.isFileUploading
+                                }
                               >
                                 {intl.formatMessage(
                                   buttonMessages.continueButton
