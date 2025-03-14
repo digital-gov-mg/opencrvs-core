@@ -133,7 +133,8 @@ export async function getLoginConfigHandler(
     'PHONE_NUMBER_PATTERN',
     'LOGIN_BACKGROUND',
     'USER_NOTIFICATION_DELIVERY_METHOD',
-    'INFORMANT_NOTIFICATION_DELIVERY_METHOD'
+    'INFORMANT_NOTIFICATION_DELIVERY_METHOD',
+    'ADVANCED_FRONTEND_CUSTOMIZATIONS'
   ])
   return { config: refineConfigResponse }
 }
@@ -151,6 +152,38 @@ const applicationConfigResponseValidation = Joi.object({
     backgroundImage: Joi.string().allow('').optional(),
     imageFit: Joi.string().allow('').optional()
   }).required(),
+  ADVANCED_FRONTEND_CUSTOMIZATIONS: Joi.object({
+    customFiles: Joi.boolean().optional(),
+    externalScripts: Joi.array().items(
+      Joi.object({
+        url: Joi.string().uri().required(),
+        activateOn: Joi.array().items(Joi.string()).required(),
+        options: Joi.object({
+          async: Joi.boolean().optional(),
+          defer: Joi.boolean().optional(),
+          nomodule: Joi.boolean().optional(),
+          onload: Joi.function().optional(),
+          onerror: Joi.function().optional(),
+          crossorigin: Joi.string().optional(),
+          integrity: Joi.string().optional(),
+        }).optional(),
+      })
+    ).optional(),
+    externalStyles: Joi.array().items(
+      Joi.object({
+        url: Joi.string().uri().required(),
+        activateOn: Joi.array().items(Joi.string()).required(),
+        options: Joi.object({
+          media: Joi.string().optional(),
+          crossorigin: Joi.string().optional(),
+          integrity: Joi.string().optional(),
+          title: Joi.string().optional(),
+          disabled: Joi.boolean().optional(),
+          type: Joi.string().optional(),
+        }).optional(),
+      })
+    ).optional(),
+  }).optional(),
   CURRENCY: Joi.object()
     .keys({
       isoCode: Joi.string().required(),
