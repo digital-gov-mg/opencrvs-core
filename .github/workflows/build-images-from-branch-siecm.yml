@@ -73,9 +73,9 @@ jobs:
         context: .
         push: true
         tags: |
-          siecm/ocrvs-base:${{ steps.set-version-and-branch.outputs.version }}
-          siecm/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}
-        cache-from: type=registry,ref=siecm/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}
+          siecm/ocrvs-base2:${{ steps.set-version-and-branch.outputs.version }}
+          siecm/ocrvs-base2:${{ steps.set-version-and-branch.outputs.branch }}
+        cache-from: type=registry,ref=siecm/ocrvs-base2:${{ steps.set-version-and-branch.outputs.branch }}
         cache-to: type=inline
 
     outputs:
