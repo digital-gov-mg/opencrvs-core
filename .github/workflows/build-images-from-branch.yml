@@ -82,9 +82,9 @@ jobs:
           context: .
           push: true
           tags: |
-            opencrvs/ocrvs-base2:${{ steps.set-version-and-branch.outputs.version }}
-            opencrvs/ocrvs-base2:${{ steps.set-version-and-branch.outputs.branch }}
-          cache-from: type=registry,ref=opencrvs/ocrvs-base2:${{ steps.set-version-and-branch.outputs.branch }}
+            opencrvs/ocrvs-core:${{ steps.set-version-and-branch.outputs.version }}
+            opencrvs/ocrvs-core:${{ steps.set-version-and-branch.outputs.branch }}
+          cache-from: type=registry,ref=opencrvs/ocrvs-core:${{ steps.set-version-and-branch.outputs.branch }}
           cache-to: type=inline
 
     outputs:

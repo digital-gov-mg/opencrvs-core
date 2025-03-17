@@ -1,5 +1,5 @@
 ARG  VERSION=prod
-FROM siecm/ocrvs-base2:${VERSION}
+FROM siecm/ocrvs-core:${VERSION}
 
 USER node
 
