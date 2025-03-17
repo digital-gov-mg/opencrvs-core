@@ -67,8 +67,8 @@ jobs:
           context: .
           push: true
           tags: |
-            siecm/ocrvs-base2:${{ steps.set-version.outputs.version }}
-          cache-from: type=registry,ref=siecm/ocrvs-base2:${{ steps.set-version.outputs.version }}
+            siecm/ocrvs-core:${{ steps.set-version.outputs.version }}
+          cache-from: type=registry,ref=siecm/ocrvs-core:${{ steps.set-version.outputs.version }}
           cache-to: type=inline
 
     outputs:
