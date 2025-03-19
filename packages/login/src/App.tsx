@@ -31,6 +31,7 @@ import { Page } from './Page'
 import { LoginBackgroundWrapper } from '@login/common/LoginBackgroundWrapper'
 import { StepTwoContainer } from '@login/views/StepTwo/StepTwoContainer'
 import { ReloadModal } from './views/ReloadModal'
+import { useAdvancedFrontendCustomizations } from './hooks/useAdvancedFrontendCustomizations'
 
 export const { store, history } = createStore()
 interface IAppProps {
@@ -47,6 +48,12 @@ const GlobalStyle = createGlobalStyle`
   }
 `
 
+/** Global load frontend customizations */
+const AdvancedCustomizationsComponent = () => {
+  useAdvancedFrontendCustomizations()
+  return null;
+}
+
 export const App = ({ store, history }: IAppProps) => (
   <ErrorBoundary>
     <GlobalStyle />
@@ -55,6 +62,7 @@ export const App = ({ store, history }: IAppProps) => (
         <ThemeProvider theme={getTheme()}>
           <ConnectedRouter history={history}>
             <ReloadModal />
+            <AdvancedCustomizationsComponent />
             <Page>
               <Switch>
                 <Route exact path={routes.STEP_ONE}>
