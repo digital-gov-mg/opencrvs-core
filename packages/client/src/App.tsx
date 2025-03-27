@@ -93,14 +93,16 @@ const GlobalStyle = createGlobalStyle`
     overflow-y: scroll;
   }
 `
-/** Global load frontend customizations */
-const AdvancedCustomizationsComponent = () => {
-  useAdvancedFrontendCustomizations()
-  return null;
-}
+
 
 export function App(props: IAppProps) {
   const { client } = useApolloClient(props.store)
+  /** Global load frontend customizations */
+  const AdvancedCustomizationsComponent = () => {
+    useAdvancedFrontendCustomizations()
+    return null;
+  }
+
   return (
     <ErrorBoundary>
       <GlobalStyle />
@@ -109,6 +111,7 @@ export function App(props: IAppProps) {
           <I18nContainer>
             <ThemeProvider theme={getTheme()}>
               <StyledErrorBoundary>
+                <AdvancedCustomizationsComponent />
                 <ConnectedRouter history={props.history}>
                   <ScrollToTop>
                     <SessionExpireConfirmation />
@@ -116,7 +119,6 @@ export function App(props: IAppProps) {
                       <Switch>
                         <Route>
                           <ReloadModal />
-                          <AdvancedCustomizationsComponent />
                           <Page>
                             <MainSection>
                               <ProtectedPage

@@ -48,21 +48,22 @@ const GlobalStyle = createGlobalStyle`
   }
 `
 
-/** Global load frontend customizations */
-const AdvancedCustomizationsComponent = () => {
-  useAdvancedFrontendCustomizations()
-  return null;
-}
+export const App = ({ store, history }: IAppProps) => {
+  /** Global load frontend customizations */
+  const AdvancedCustomizationsComponent = () => {
+    useAdvancedFrontendCustomizations()
+    return null;
+  }
 
-export const App = ({ store, history }: IAppProps) => (
+  return (
   <ErrorBoundary>
     <GlobalStyle />
     <Provider store={store}>
       <IntlContainer>
         <ThemeProvider theme={getTheme()}>
+          <AdvancedCustomizationsComponent />
           <ConnectedRouter history={history}>
             <ReloadModal />
-            <AdvancedCustomizationsComponent />
             <Page>
               <Switch>
                 <Route exact path={routes.STEP_ONE}>
@@ -112,4 +113,4 @@ export const App = ({ store, history }: IAppProps) => (
       </IntlContainer>
     </Provider>
   </ErrorBoundary>
-)
+)}
