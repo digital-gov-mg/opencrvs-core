@@ -39,6 +39,7 @@
     "packages/scheduler/jobs/*",
     ".nvmrc",
     ".idea",
+    ".github/workflows/build-images-from-branch-siecma.yml",
     "packages/dashboards/*.jar",
     "packages/dashboards/plugins/*.jar",
     "packages/dashboards/data/metabase/*.db",
