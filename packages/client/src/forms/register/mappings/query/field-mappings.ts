@@ -992,6 +992,7 @@ enum SupportedFacilityFHIRProp {
   locationLevel3 = 'locationLevel3',
   locationLevel4 = 'locationLevel4',
   locationLevel5 = 'locationLevel5',
+  locationLevel6 = 'locationLevel6',
   district = 'district',
   state = 'state',
   country = 'country'
@@ -1196,7 +1197,12 @@ export function questionnaireToTemplateFieldTransformer(
       if (!offlineCountryConfig) {
         return
       }
-      const options = getFieldOptions(field, queryData, offlineCountryConfig)
+      const options = getFieldOptions(
+        sectionId,
+        field,
+        queryData,
+        offlineCountryConfig
+      )
       transformedData[sectionId][field.name] =
         options
           .find((option) => option.value === selectedQuestion.value)
