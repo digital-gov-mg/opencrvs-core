@@ -14,7 +14,6 @@ import {
   IFormField,
   IFormSectionData
 } from '@client/forms'
-import { userMessages } from '@client/i18n/messages'
 import { formatUrl } from '@client/navigation'
 import { VIEW_VERIFY_CERTIFICATE } from '@client/navigation/routes'
 import {
@@ -60,10 +59,7 @@ export const roleUserTransformer = (
   )
 
   transformedData[targetSectionId || sectionId][targetFieldName || 'role'] =
-    history?.user?.systemRole
-      ? (userMessages[history.user.systemRole] as MessageDescriptor &
-          Record<string, string>)
-      : ''
+    history?.user.role.label ?? ''
 }
 export function registrationNumberTransformer(
   transformedData: IFormData,
@@ -97,28 +93,38 @@ export const certificateDateTransformer =
 
 export const convertToLocal = (
   mobileWithCountryCode: string,
-  alpha3CountryCode: string
+  alpha3CountryCode?: string
 ) => {
   /*
    *  If country is the fictional demo country (Farajaland), use Zambian number format
    */
+  alpha3CountryCode = alpha3CountryCode === 'FAR' ? 'ZMB' : alpha3CountryCode
 
-  const countryCode = countryAlpha3toAlpha2(alpha3CountryCode)
+  const phoneUtil = PhoneNumberUtil.getInstance()
+  const number = phoneUtil.parse(mobileWithCountryCode)
+  const countryCode = alpha3CountryCode
+    ? countryAlpha3toAlpha2(alpha3CountryCode)
+    : phoneUtil.getRegionCodeForNumber(number)
 
   if (!countryCode) {
     return
   }
 
-  const phoneUtil = PhoneNumberUtil.getInstance()
-
   if (!phoneUtil.isPossibleNumberString(mobileWithCountryCode, countryCode)) {
     return
   }
-  const number = phoneUtil.parse(mobileWithCountryCode, countryCode)
-
-  return phoneUtil
+  let nationalFormat = phoneUtil
     .format(number, PhoneNumberFormat.NATIONAL)
     .replace(/[^A-Z0-9]+/gi, '')
+
+  // This is a special case for countries that have a national prefix of 0
+  if (
+    phoneUtil.getNddPrefixForRegion(countryCode, true) === '0' &&
+    !nationalFormat.startsWith('0')
+  ) {
+    nationalFormat = '0' + nationalFormat
+  }
+  return nationalFormat
 }
 
 export const localPhoneTransformer =
@@ -131,7 +137,9 @@ export const localPhoneTransformer =
   ) => {
     const fieldName = transformedFieldName || field.name
     const msisdnPhone = get(queryData, fieldName as string) as unknown as string
-
+    if (!msisdnPhone) {
+      return transformedData
+    }
     const localPhone = convertToLocal(msisdnPhone, window.config.COUNTRY)
 
     transformedData[sectionId][field.name] = localPhone
@@ -144,11 +152,17 @@ const getUserFullName = (history: History): string => {
 
 const getUserRole = (history: History): MessageDescriptor => {
   return (
-    (history?.user && userMessages[history.user.systemRole]) || {
+    history?.user?.role.label || {
       defaultMessage: ' ',
       description: 'empty string',
       id: 'form.field.label.empty'
     }
+  )
+}
+
+const getUserFullHonorificName = (history: History): string => {
+  return (
+    history?.user?.fullHonorificName || ''
   )
 }
 
@@ -201,7 +215,8 @@ export const userTransformer =
         date: history.date,
         ...locationHierarchy,
         signature: getUserSignature(history),
-        comments: history.comments?.[0]?.comment
+        comments: history.comments?.[0]?.comment,
+        fullHonorificName: getUserFullHonorificName(history)
       } as IFormSectionData
     }
   }

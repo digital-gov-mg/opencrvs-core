@@ -10,7 +10,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react'
 import styled from 'styled-components'
-import { ITextInputProps, TextInput, IRef } from '../TextInput/TextInput'
+import { ITextInputProps, TextInput } from '../TextInput/TextInput'
 import { InputLabel } from '../InputField/InputLabel'
 
 const DateWrapper = styled.div`
@@ -55,9 +55,9 @@ export const DateField = ({
   ...props
 }: IDateFieldProps) => {
   const [date, setDate] = useState<IState>({ yyyy: '', mm: '', dd: '' })
-  const ddRef = useRef<IRef>(null)
-  const mmRef = useRef<IRef>(null)
-  const yyyyRef = useRef<IRef>(null)
+  const ddRef = useRef<HTMLInputElement>(null)
+  const mmRef = useRef<HTMLInputElement>(null)
+  const yyyyRef = useRef<HTMLInputElement>(null)
   const { dd, mm, yyyy } = date
 
   useEffect(() => {
@@ -82,7 +82,7 @@ export const DateField = ({
             return
           }
           if (val.length > 1 && mmRef.current) {
-            mmRef.current.focusField()
+            mmRef.current.focus()
           }
           break
         case 'mm':
@@ -90,15 +90,11 @@ export const DateField = ({
             return
           }
           if (val.length > 1 && yyyyRef.current) {
-            yyyyRef.current.focusField()
+            yyyyRef.current.focus()
           }
           break
         case 'yyyy':
-          if (
-            val.length > 4 ||
-            Number(val) > MAX_YEAR_NUMBER ||
-            (val.length === 2 && Number(val) < 19)
-          ) {
+          if (val.length > 4 || Number(val) > MAX_YEAR_NUMBER) {
             return
           }
           break
@@ -170,7 +166,6 @@ export const DateField = ({
           type="number"
           placeholder={ignorePlaceHolder ? '' : 'yyyy'}
           maxLength={4}
-          min={1900}
           value={yyyy}
           onChange={change}
           onWheel={(event: React.WheelEvent<HTMLInputElement>) => {

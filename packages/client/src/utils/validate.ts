@@ -10,24 +10,38 @@
  */
 import { MessageDescriptor } from 'react-intl'
 import { validationMessages as messages } from '@client/i18n/messages'
-import {
-  IFormFieldValue,
-  IFormData,
-  IFormSectionData
-} from '@opencrvs/client/src/forms'
+// import {
+//   IFormFieldValue,
+//   IFormData,
+//   IFormSectionData
+// } from '@opencrvs/client/src/forms'
 import {
   REGEXP_BLOCK_ALPHA_NUMERIC_DOT,
   REGEXP_DECIMAL_POINT_NUMBER,
-  INFORMANT_MINIMUM_AGE,
   NATIONAL_ID
 } from '@client/utils/constants'
 import { validate as validateEmail } from 'email-validator'
 import XRegExp from 'xregexp'
 import { IOfflineData } from '@client/offline/reducer'
-import { getListOfLocations } from '@client/forms/utils'
 import _, { get } from 'lodash'
 import format, { convertAgeToDate } from '@client/utils/date-formatting'
 
+export function getListOfLocations(
+  resource: IOfflineData,
+  resourceType: Extract<
+    keyof IOfflineData,
+    'facilities' | 'locations' | 'offices'
+  >
+) {
+  return resource[resourceType]
+}
+
+// @TODO: Importing from forms breaks the tests. Basically the references are not resolved correctly
+// and @opencrvs/client/src/forms causes recursion in this branch.
+// https://github.com/vitest-dev/vitest/issues/546
+type IFormFieldValue = any
+type IFormData = any
+type IFormSectionData = any
 /**
  * NOTE! When amending validators in this file, remember to also update country configuration typings to reflect the changes
  */
@@ -225,10 +239,6 @@ export const isDateNotInFuture = (date: string) => {
   return new Date(date) <= new Date(Date.now())
 }
 
-export const isDateNotPastLimit = (date: string, limit: Date) => {
-  return new Date(date) >= limit
-}
-
 export const isDateNotBeforeBirth = (date: string, drafts: IFormData) => {
   const birthDate = drafts?.deceased?.birthDate as string
   return birthDate ? new Date(date) >= new Date(birthDate) : true
@@ -263,6 +273,28 @@ export const minAgeGapExist = (
   return diff >= minAgeGap
 }
 
+export const isAgeInYearsBetween =
+  (min: number, max?: number): Validation =>
+  (value: IFormFieldValue) => {
+    const dateFormat = /^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/
+    if (value && dateFormat.test(value.toString())) {
+      max = max || 120 // defaulting to 120 years as max if max is not provided
+      const today = new Date()
+      const dateOfBirth = new Date(value.toString())
+      const ageFromDateOfBirth = today.getFullYear() - dateOfBirth.getFullYear()
+
+      const ageIsWithinRange =
+        ageFromDateOfBirth >= min && ageFromDateOfBirth <= max
+      if (ageIsWithinRange) return undefined
+
+      return {
+        message: messages.isAgeInYearsBetween,
+        props: { min, max }
+      }
+    }
+    return undefined
+  }
+
 export const isValidBirthDate: Validation = (
   value: IFormFieldValue,
   drafts?
@@ -286,13 +318,12 @@ export const isValidBirthDate: Validation = (
 
 export const isValidChildBirthDate: Validation = (value: IFormFieldValue) => {
   const childBirthDate = value as string
-  const pastDateLimit = new Date(1900, 0, 1)
+
   return !childBirthDate
     ? { message: messages.required }
     : childBirthDate &&
       isAValidDateFormat(childBirthDate) &&
-      isDateNotInFuture(childBirthDate) &&
-      isDateNotPastLimit(childBirthDate, pastDateLimit)
+      isDateNotInFuture(childBirthDate)
     ? undefined
     : { message: messages.isValidBirthDate }
 }
@@ -482,17 +513,6 @@ export const dateNotInFuture = (): Validation => (value: IFormFieldValue) => {
     return { message: messages.dateFormat }
   }
 }
-
-export const dateNotPastLimit =
-  (limit: string): Validation =>
-  (value: IFormFieldValue) => {
-    const cast = value as string
-    if (isDateNotPastLimit(cast, new Date(limit))) {
-      return undefined
-    } else {
-      return { message: messages.dateFormat }
-    }
-  }
 
 export const dateNotToday = (date: string): boolean => {
   const today = new Date().setHours(0, 0, 0, 0)
@@ -720,24 +740,6 @@ export const isMoVisitDateAfterBirthDateAndBeforeDeathDate: Validation = (
     ) {
       return {
         message: messages.isMoVisitBeforeBirth
-      }
-    }
-  }
-}
-
-export const isInformantOfLegalAge: Validation = (value: IFormFieldValue) => {
-  if (value) {
-    if (
-      minAgeGapExist(
-        format(new Date(Date.now()), 'yyyy-MM-dd'),
-        value.toString(),
-        INFORMANT_MINIMUM_AGE
-      )
-    ) {
-      return undefined
-    } else {
-      return {
-        message: messages.isInformantOfLegalAge
       }
     }
   }

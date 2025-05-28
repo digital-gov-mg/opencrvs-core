@@ -19,8 +19,8 @@ function configStorage(dbName: string) {
   validateApplicationVersion()
 }
 
-async function getItem(key: string): Promise<string | null> {
-  return await localForage.getItem<string>(key)
+async function getItem<T = string>(key: string): Promise<T | null> {
+  return await localForage.getItem<T>(key)
 }
 
 async function setItem(key: string, value: string) {

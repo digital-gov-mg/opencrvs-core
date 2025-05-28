@@ -22,12 +22,19 @@ export const SEARCH_USERS = gql`
           firstNames
           familyName
         }
-        username
-        systemRole
         mobile
         email
+        fullHonorificName
+        primaryOffice {
+          id
+        }
         role {
-          _id
+          id
+          label {
+            id
+            defaultMessage
+            description
+          }
         }
         status
         underInvestigation
@@ -81,9 +88,10 @@ export const GET_USER_AUDIT_LOG = gql`
 `
 
 export const GET_USER = gql`
-  query getUser($userId: String) {
+  query getUser($userId: String!) {
     getUser(userId: $userId) {
       id
+      userMgntUserID
       name {
         use
         firstNames
@@ -92,16 +100,17 @@ export const GET_USER = gql`
       username
       mobile
       email
+      fullHonorificName
       identifier {
         system
         value
       }
-      systemRole
       role {
-        _id
-        labels {
-          lang
-          label
+        id
+        label {
+          id
+          defaultMessage
+          description
         }
       }
       status
