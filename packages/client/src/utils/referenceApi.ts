@@ -149,7 +149,7 @@ export interface IApplicationConfigAnonymous {
   COUNTRY_LOGO: ICountryLogo
   LOGIN_BACKGROUND: ILoginBackground
   PHONE_NUMBER_PATTERN: RegExp
-  ADVANCED_FRONTEND_CUSTOMIZATIONS: IAdvancedFrontendCustomizations
+  ADVANCED_FRONTEND_CUSTOMIZATIONS?: IAdvancedFrontendCustomizations
 }
 
 export interface IApplicationConfig {
@@ -183,7 +183,7 @@ export interface IApplicationConfig {
   LOGIN_BACKGROUND: ILoginBackground
   USER_NOTIFICATION_DELIVERY_METHOD: string
   INFORMANT_NOTIFICATION_DELIVERY_METHOD: string
-  ADVANCED_FRONTEND_CUSTOMIZATIONS: IAdvancedFrontendCustomizations
+  ADVANCED_FRONTEND_CUSTOMIZATIONS?: IAdvancedFrontendCustomizations
   SEARCH_DEFAULT_CRITERIA?: SearchCriteriaType
 }
 export interface IApplicationConfigResponse {
