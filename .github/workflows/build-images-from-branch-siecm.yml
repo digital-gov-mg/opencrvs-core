@@ -14,6 +14,7 @@ on:
     branches:
     - prod
     - dev
+    - dev-1.7.2
 
 jobs:
   base:
