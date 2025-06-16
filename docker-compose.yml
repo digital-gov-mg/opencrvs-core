@@ -89,7 +89,7 @@ services:
       - DOCUMENTS_URL=http://documents:9050
 
   events:
-    image: opencrvs/ocrvs-events:${VERSION}
+    image: siecm/ocrvs-events:${VERSION}
     #platform: linux/amd64
     build:
       context: .
