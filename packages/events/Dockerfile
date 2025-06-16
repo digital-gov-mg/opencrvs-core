@@ -1,5 +1,5 @@
 ARG  BRANCH=develop
-FROM siecm/ocrvs-base:${BRANCH}
+FROM siecm/ocrvs-core:${BRANCH}
 
 USER node
 
