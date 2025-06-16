@@ -19,21 +19,15 @@ function configStorage(dbName: string) {
   validateApplicationVersion()
 }
 
-async function getItem(key: string): Promise<string | null> {
-  return await localForage.getItem<string>(key)
+async function getItem<T = string>(key: string): Promise<T | null> {
+  return await localForage.getItem<T>(key)
 }
 
-async function setItem(key: string, value: string) {
-  /** dispatch a window event to be able to listen to the storage change */ 
-  const event = new CustomEvent('storageitemchange', { detail: { key } });
-  window.dispatchEvent(event);
+async function setItem<T = string>(key: string, value: T) {
   return await localForage.setItem(key, value)
 }
 
 async function removeItem(key: string) {
-  /** dispatch a window event to be able to listen to the storage deletion */
-  const event = new CustomEvent('storageitemremove', { detail: { key } });
-  window.dispatchEvent(event);
   return await localForage.removeItem(key)
 }
 

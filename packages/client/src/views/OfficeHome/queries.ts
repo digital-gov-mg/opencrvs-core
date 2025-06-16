@@ -76,6 +76,7 @@ const EVENT_SEARCH_RESULT_FIELDS = gql`
 export const REGISTRATION_HOME_QUERY = gql`
   ${EVENT_SEARCH_RESULT_FIELDS}
   query registrationHome(
+    $userId: String!
     $declarationLocationId: String!
     $pageSize: Int
     $inProgressSkip: Int
@@ -83,6 +84,7 @@ export const REGISTRATION_HOME_QUERY = gql`
     $reviewStatuses: [String]
     $reviewSkip: Int
     $rejectSkip: Int
+    $sentForReviewSkip: Int
     $approvalSkip: Int
     $externalValidationSkip: Int
     $printSkip: Int
@@ -99,6 +101,7 @@ export const REGISTRATION_HOME_QUERY = gql`
         ]
       }
       count: $pageSize
+      sortColumn: "dateOfDeclaration"
       skip: $inProgressSkip
     ) {
       totalItems
@@ -117,6 +120,7 @@ export const REGISTRATION_HOME_QUERY = gql`
         ]
       }
       count: $pageSize
+      sortColumn: "dateOfDeclaration"
       skip: $healthSystemSkip
     ) {
       totalItems
@@ -130,6 +134,7 @@ export const REGISTRATION_HOME_QUERY = gql`
         registrationStatuses: $reviewStatuses
       }
       count: $pageSize
+      sortColumn: "dateOfDeclaration"
       skip: $reviewSkip
     ) {
       totalItems
@@ -152,12 +157,34 @@ export const REGISTRATION_HOME_QUERY = gql`
         ...EventSearchFields
       }
     }
+    sentForReviewTab: searchEvents(
+      userId: $userId
+      advancedSearchParameters: {
+        declarationLocationId: $declarationLocationId
+        registrationStatuses: [
+          "DECLARED"
+          "IN_PROGRESS"
+          "VALIDATED"
+          "WAITING_VALIDATION"
+          "REGISTERED"
+        ]
+      }
+      count: $pageSize
+      sortColumn: "dateOfDeclaration"
+      skip: $sentForReviewSkip
+    ) {
+      totalItems
+      results {
+        ...EventSearchFields
+      }
+    }
     approvalTab: searchEvents(
       advancedSearchParameters: {
         declarationLocationId: $declarationLocationId
         registrationStatuses: ["VALIDATED", "CORRECTION_REQUESTED"]
       }
       count: $pageSize
+      sortColumn: "dateOfDeclaration"
       skip: $approvalSkip
     ) {
       totalItems
@@ -171,6 +198,7 @@ export const REGISTRATION_HOME_QUERY = gql`
         registrationStatuses: ["WAITING_VALIDATION"]
       }
       count: $pageSize
+      sortColumn: "dateOfDeclaration"
       skip: $externalValidationSkip
     ) {
       totalItems
@@ -184,6 +212,7 @@ export const REGISTRATION_HOME_QUERY = gql`
         registrationStatuses: ["REGISTERED"]
       }
       count: $pageSize
+      sortColumn: "dateOfDeclaration"
       skip: $printSkip
     ) {
       totalItems
@@ -197,55 +226,8 @@ export const REGISTRATION_HOME_QUERY = gql`
         registrationStatuses: ["CERTIFIED"]
       }
       count: $pageSize
+      sortColumn: "dateOfDeclaration"
       skip: $issueSkip
-    ) {
-      totalItems
-      results {
-        ...EventSearchFields
-      }
-    }
-  }
-`
-
-export const FIELD_AGENT_HOME_QUERY = gql`
-  ${EVENT_SEARCH_RESULT_FIELDS}
-  query fieldAgentHome(
-    $userId: String
-    $declarationLocationId: String!
-    $pageSize: Int
-    $reviewSkip: Int
-    $rejectSkip: Int
-  ) {
-    reviewTab: searchEvents(
-      userId: $userId
-      advancedSearchParameters: {
-        declarationLocationId: $declarationLocationId
-        registrationStatuses: [
-          "DECLARED"
-          "IN_PROGRESS"
-          "VALIDATED"
-          "WAITING_VALIDATION"
-          "REGISTERED"
-        ]
-      }
-      count: $pageSize
-      skip: $reviewSkip
-    ) {
-      totalItems
-      results {
-        ...EventSearchFields
-      }
-    }
-    rejectTab: searchEvents(
-      userId: $userId
-      advancedSearchParameters: {
-        declarationLocationId: $declarationLocationId
-        registrationStatuses: ["REJECTED"]
-      }
-      count: $pageSize
-      skip: $rejectSkip
-      sortColumn: "createdAt.keyword"
-      sort: "asc"
     ) {
       totalItems
       results {

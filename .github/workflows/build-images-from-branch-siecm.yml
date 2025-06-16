@@ -1,3 +1,11 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# OpenCRVS is also distributed under the terms of the Civil Registration
+# & Healthcare Disclaimer located at http://opencrvs.org/license.
+#
+# Copyright (C) The OpenCRVS Authors located at https://github.com/opencrvs/opencrvs-core/blob/master/AUTHORS.
 name: Publish images to Dockerhub from any branch
 
 on:
@@ -9,12 +17,12 @@ on:
         required: true
   pull_request:
     branches:
-    - prod
+      - prod
   push:
     branches:
-    - prod
-    - dev
-    - dev-1.7.2
+      - prod
+      - dev
+      - dev-1.7.2
 
 jobs:
   base:
@@ -120,4 +128,3 @@ jobs:
             siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
           cache-from: type=registry,ref=siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
           cache-to: type=inline
-

@@ -65,11 +65,6 @@ export const extractCommentFragmentValue = (
   return fragmentValue
 }
 
-export const sentenceCase = (str: string): string =>
-  str.replace(/\w\S*/g, (txt: string) => {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-  })
-
 export const mergeArraysRemovingEmptyStrings = (
   strArrayA: string[],
   strArrayB: string[]
@@ -95,9 +90,9 @@ export function getLocalisedName(
 ): string {
   return intl
     .formatMessage(constantsMessages.humanName, {
-      firstName: nameObject.firstNames,
-      middleName: nameObject.middleName,
-      lastName: nameObject.familyName
+      firstName: nameObject?.firstNames,
+      middleName: nameObject?.middleName,
+      lastName: nameObject?.familyName
     })
     .replace(/\s+/g, ' ') // Remove extra spaces
     .trim()

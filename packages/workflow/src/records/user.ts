@@ -38,8 +38,8 @@ interface IUserModelData {
   email: string
   emailForNotification?: string
   mobile?: string
+  fullHonorificName?: string
   status: string
-  systemRole: string
   role: IUserRole
   creationDate?: string
   practitionerId: string

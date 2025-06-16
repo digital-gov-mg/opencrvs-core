@@ -11,7 +11,7 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import * as Sentry from '@sentry/react'
 
-export interface ICodeVerifyData {
+interface ICodeVerifyData {
   nonce: string
   code: string
 }
@@ -72,7 +72,7 @@ export interface IApplicationConfig {
   LOGIN_BACKGROUND: ILoginBackground
   USER_NOTIFICATION_DELIVERY_METHOD: string
   INFORMANT_NOTIFICATION_DELIVERY_METHOD: string
-  ADVANCED_FRONTEND_CUSTOMIZATIONS: IAdvancedFrontendCustomizations
+  ADVANCED_FRONTEND_CUSTOMIZATIONS?: IAdvancedFrontendCustomizations
 }
 
 export interface IApplicationConfigResponse {
