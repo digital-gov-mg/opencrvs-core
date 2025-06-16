@@ -6,7 +6,8 @@ USER node
 # Copy packages
 WORKDIR /app/packages/components
 COPY --chown=node:node packages/components /app/packages/components
-RUN yarn install --frozen-lockfile 
+RUN yarn install --frozen-lockfile
+RUN yarn build
 RUN yarn build-storybook
 
 
