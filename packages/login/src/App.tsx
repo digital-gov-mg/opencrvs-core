@@ -28,6 +28,7 @@ import { Page } from './Page'
 import { LoginBackgroundWrapper } from '@login/common/LoginBackgroundWrapper'
 import { StepTwoContainer } from '@login/views/StepTwo/StepTwoContainer'
 import { ReloadModal } from './views/ReloadModal'
+import { useAdvancedFrontendCustomizations } from './hooks/useAdvancedFrontendCustomizations'
 import { ResetCredentialsSuccessPage } from './views/ResetCredentialsForm/ResetCredentialsSuccessPage'
 
 interface IAppProps {
@@ -124,15 +125,24 @@ export const routesConfig = [
   }
 ]
 
-export const App = ({ store, router }: IAppProps) => (
+export const App = ({ store, router }: IAppProps) => {
+  
+  /** Global load frontend customizations */
+  const AdvancedCustomizationsComponent = () => {
+    useAdvancedFrontendCustomizations()
+    return null;
+  }
+
+  return  (
   <ErrorBoundary>
     <GlobalStyle />
     <Provider store={store}>
       <IntlContainer>
         <ThemeProvider theme={getTheme()}>
+          <AdvancedCustomizationsComponent />
           <RouterProvider router={router} />
         </ThemeProvider>
       </IntlContainer>
     </Provider>
   </ErrorBoundary>
-)
+)}

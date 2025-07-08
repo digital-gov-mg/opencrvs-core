@@ -9,22 +9,21 @@
 name: Publish images to Dockerhub from any branch
 
 on:
-  workflow_call:
-    inputs:
-      branch_name:
-        description: Branch to build from
-        required: true
-        type: string
   workflow_dispatch:
     inputs:
       branch_name:
-        default: develop
-        required: true
         description: Branch to build from
+        default: dev
+        required: true
+  pull_request:
+    branches:
+      - prod
   push:
     branches:
-      - develop
-      - main
+      - prod
+      - dev
+      - dev-1.7.2
+
 jobs:
   base:
     runs-on: ubuntu-22.04
@@ -50,15 +49,10 @@ jobs:
           export VERSION=`git log -1 --pretty=format:%h`
           echo "Pushing version $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-          # the event_name is the event that triggered the caller workflow
-          # and not "workflow_call" like how it was supposed to be when
-          # another workflow is calling this one
-
           if [ "${{ github.event_name }}" == 'push' ]; then
-            BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+          BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
           elif [ "${{ github.event_name }}" == 'pull_request' ]; then
-            BRANCH=${{ github.event.pull_request.head.ref }}
+          BRANCH=${{ github.event.pull_request.head.ref }}
           else
           BRANCH=${{ inputs.branch_name }}
           fi
@@ -78,8 +72,8 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and push base image
         uses: docker/build-push-action@v6
@@ -117,8 +111,8 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -134,65 +128,3 @@ jobs:
             siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
           cache-from: type=registry,ref=siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}
           cache-to: type=inline
-
-  security-scans-pr:
-    needs: [build, base]
-    runs-on: ubuntu-22.04
-    if: github.event_name == 'pull_request'
-    strategy:
-      matrix:
-        service: ${{ fromJSON(needs.base.outputs.services) }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            trivy.yaml
-            .trivyignore.yaml
-          sparse-checkout-cone-mode: false
-      - name: Gather Trivy output from base branch image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ github.event.pull_request.base.ref }}'
-          trivy-config: trivy.yaml
-          format: 'sarif'
-          output: './trivy-results-base.sarif'
-          exit-code: '0'
-
-      - name: Gather Trivy output from newly build image
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
-          trivy-config: trivy.yaml
-          format: 'sarif'
-          output: './trivy-results-branch.sarif'
-          exit-code: '0'
-
-      - name: Remove lines that are always expected to be different
-        run: |
-          jq '.runs |= map(del(.originalUriBaseIds, .properties))' ${{ github.workspace }}/trivy-results-base.sarif > ${{ github.workspace }}/trivy-results-base.sarif
-          jq '.runs |= map(del(.originalUriBaseIds, .properties))' ${{ github.workspace }}/trivy-results-branch.sarif > ${{ github.workspace }}/trivy-results-branch.sarif
-
-      - name: Diff Trivy results to catch newly introduced vulnerabilities
-        run: diff -u ./trivy-results-base.sarif ./trivy-results-branch.sarif
-
-  security-scans-develop:
-    needs: [build, base]
-    runs-on: ubuntu-22.04
-    if: ${{ needs.base.outputs.branch == 'develop' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        service: ${{ fromJSON(needs.base.outputs.services) }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            trivy.yaml
-            .trivyignore.yaml
-          sparse-checkout-cone-mode: false
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
-          trivy-config: trivy.yaml

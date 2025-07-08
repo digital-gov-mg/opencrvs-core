@@ -105,11 +105,51 @@ export interface ICurrency {
   languagesAndCountry: string[]
 }
 
+type TActivateCustomizationOn = 'login' | 'client'
+interface IStyleTagOptions {
+  media: string
+  crossorigin: string
+  integrity: string
+  title: string
+  disabled: boolean
+  type: string
+}
+
+interface IScriptTagOptions {
+  async: boolean
+  defer: boolean
+  nomodule: boolean
+  onload: ((this: GlobalEventHandlers, ev: any) => any) | null
+  onerror: OnErrorEventHandler
+  crossorigin: string
+  integrity: string
+}
+
+export interface ITag {
+  url: string
+  activateOn: TActivateCustomizationOn[]
+}
+
+export interface IStyleTag extends ITag {
+  options: IStyleTagOptions
+}
+
+export interface IScriptTag extends ITag {
+  options: IScriptTagOptions
+}
+
+export interface IAdvancedFrontendCustomizations {
+  customFiles: boolean
+  externalScripts: IScriptTag[]
+  externalStyles: IStyleTag[]
+}
+
 export interface IApplicationConfigAnonymous {
   APPLICATION_NAME: string
   COUNTRY_LOGO: ICountryLogo
   LOGIN_BACKGROUND: ILoginBackground
   PHONE_NUMBER_PATTERN: RegExp
+  ADVANCED_FRONTEND_CUSTOMIZATIONS?: IAdvancedFrontendCustomizations
 }
 
 export interface IApplicationConfig {
@@ -143,6 +183,7 @@ export interface IApplicationConfig {
   LOGIN_BACKGROUND: ILoginBackground
   USER_NOTIFICATION_DELIVERY_METHOD: string
   INFORMANT_NOTIFICATION_DELIVERY_METHOD: string
+  ADVANCED_FRONTEND_CUSTOMIZATIONS?: IAdvancedFrontendCustomizations
   SEARCH_DEFAULT_CRITERIA?: SearchCriteriaType
 }
 export interface IApplicationConfigResponse {
