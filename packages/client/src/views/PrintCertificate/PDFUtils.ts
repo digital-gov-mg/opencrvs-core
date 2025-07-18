@@ -36,8 +36,6 @@ import {
   formatPlainDate,
   isValidPlainDate
 } from '@client/utils/date-formatting'
-import { getUserDetails } from '@client/profile/profileSelectors'
-import { getUserData } from '@client/declarations'
 
 type TemplateDataType = string | MessageDescriptor | Array<string>
 function isMessageDescriptor(
