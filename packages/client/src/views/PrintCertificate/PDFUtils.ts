@@ -36,6 +36,8 @@ import {
   formatPlainDate,
   isValidPlainDate
 } from '@client/utils/date-formatting'
+import { getUserDetails } from '@client/profile/profileSelectors'
+import { getUserData } from '@client/declarations'
 
 type TemplateDataType = string | MessageDescriptor | Array<string>
 function isMessageDescriptor(
@@ -206,7 +208,9 @@ export function executeHandlebarsTemplate(
 
   const template = Handlebars.compile(templateString)
   const formattedTemplateData = formatAllNonStringValues(data, intl)
-  const output = template(formattedTemplateData)
+  const output = template(formattedTemplateData, {
+    data: state.declarationsState
+  })
   return output
 }
 
