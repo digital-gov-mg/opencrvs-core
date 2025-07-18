@@ -206,7 +206,9 @@ export function executeHandlebarsTemplate(
 
   const template = Handlebars.compile(templateString)
   const formattedTemplateData = formatAllNonStringValues(data, intl)
-  const output = template(formattedTemplateData)
+  const output = template(formattedTemplateData, {
+    data: state.declarationsState
+  })
   return output
 }
 
