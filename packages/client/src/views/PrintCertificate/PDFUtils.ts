@@ -206,8 +206,11 @@ export function executeHandlebarsTemplate(
 
   const template = Handlebars.compile(templateString)
   const formattedTemplateData = formatAllNonStringValues(data, intl)
+
   const output = template(formattedTemplateData, {
-    data: state.declarationsState
+    data: state?.declarationsState?.declarations.find(
+      (decl) => decl.id === state?.router?.location?.pathname?.split('/')[2]
+    )
   })
   return output
 }
