@@ -129,7 +129,11 @@ export const usePrintableCertificate = (declarationId: string) => {
     if (certificateTemplate)
       compileSvg(
         certificateTemplate,
-        { ...declaration.data.template, preview: true },
+        {
+          ...declaration.data.template,
+          preview: true,
+          declarationId: declaration.id
+        },
         state
       ).then((svg) => {
         const svgWithFonts = addFontsToSvg(
