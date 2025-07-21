@@ -23,6 +23,8 @@ on:
       - prod
       - dev
       - dev-1.7.2
+      - dev-1.7.3
+      - dev-1.7.4
 
 jobs:
   base:
