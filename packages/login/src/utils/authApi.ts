@@ -121,6 +121,7 @@ export function request<T>(options: AxiosRequestConfig) {
     const gatewayVersion = response.headers['x-version']
 
     if (gatewayVersion && gatewayVersion !== loginClientVersion) {
+      // eslint-disable-next-line no-console
       console.log(
         `Version Mismatch: Frontend is running on ${loginClientVersion}, whereas backend is running on ${gatewayVersion}. Please Reload to get the latest client`
       )
@@ -132,6 +133,7 @@ export function request<T>(options: AxiosRequestConfig) {
   const onError = (error: AxiosError) => {
     const gatewayVersion = error.response?.headers['x-version']
     if (gatewayVersion && gatewayVersion !== loginClientVersion) {
+      // eslint-disable-next-line no-console
       console.log(
         `Version Mismatch: Frontend is running on ${loginClientVersion}, whereas backend is running on ${gatewayVersion}. Please Reload to get the latest client`
       )

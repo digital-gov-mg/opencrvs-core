@@ -283,6 +283,7 @@ services:
       - HEARTH_MONGO_URL=mongodb://mongo1/hearth-dev
       - DASHBOARD_MONGO_URL=mongodb://mongo1/performance
       - OPENHIM_MONGO_URL=mongodb://mongo1/openhim-dev
+      - EVENTS_MONGO_URL=mongodb://mongo1/events
       - SEARCH_URL=http://search:9090/
       - ES_HOST=elasticsearch:9200
       - INFLUX_HOST=influxdb
@@ -301,3 +302,14 @@ services:
     environment:
       - NODE_ENV=development
       - COUNTRY_CONFIG_URL=http://countryconfig:3040
+  
+  data-seeder:
+    image: ghcr.io/opencrvs/ocrvs-data-seeder:${VERSION}
+    #platform: linux/amd64
+    build:
+      context: .
+      dockerfile: ./packages/data-seeder/Dockerfile
+    depends_on:
+      - base
+    deploy:
+      replicas: 0
