@@ -25,6 +25,7 @@ on:
       - dev-1.7.2
       - dev-1.7.3
       - dev-1.7.4
+      - dev-1.8.2
 
 jobs:
   base:
