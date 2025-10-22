@@ -203,7 +203,12 @@ export function compileSvg(
 
   const template = Handlebars.compile(templateString)
   const formattedTemplateData = formatAllNonStringValues(data, intl)
-  const output = template(formattedTemplateData)
+  // TODO: data is used to get certificate collector info while collecting certification
+  const output = template(formattedTemplateData, {
+    data: state?.declarationsState?.declarations.find(
+      (decl) => decl.id === data?.declarationId
+    )
+  })
   return output
 }
 

@@ -169,7 +169,12 @@ export const usePrintableCertificate = (declarationId?: string) => {
 
   const svgWithoutFonts = compileSvg(
     svgTemplate,
-    { ...declaration?.data.template, preview: true },
+    {
+      ...declaration?.data.template,
+      preview: true,
+      // TODO: declarationId is used to get certificate collector info while collecting certification
+      declarationId: declaration?.id
+    },
     state
   )
   const svgCode = addFontsToSvg(svgWithoutFonts, certificateFonts)
@@ -207,10 +212,14 @@ export const usePrintableCertificate = (declarationId?: string) => {
     const base64ReplacedTemplate = await replaceMinioUrlWithBase64(
       draft.data.template
     )
-
     const svg = compileSvg(
       svgTemplate,
-      { ...base64ReplacedTemplate, preview: false },
+      {
+        ...base64ReplacedTemplate,
+        preview: false,
+        // TODO: declarationId is used to get certificate collector info while collecting certification
+        declarationId: declaration?.id
+      },
       state
     )
     draft.data.registration = {
