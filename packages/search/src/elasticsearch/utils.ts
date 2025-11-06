@@ -220,9 +220,10 @@ export const composeAssignment = (
 ) => {
   if (!office || !practitioner) {
     logger.error(
-      'Error on composeAssignment (utils.ts): Missing office or practitioner: ',
-      office,
-      practitioner
+      'Error on composeAssignment (utils.ts): Missing office: ',
+      JSON.stringify(office),
+      '---- or practitioner: ',
+      JSON.stringify(practitioner)
     )
   }
   const practitionerName = findName(NAME_EN, practitioner.name)

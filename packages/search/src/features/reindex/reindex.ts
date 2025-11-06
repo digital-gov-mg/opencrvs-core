@@ -75,7 +75,7 @@ export const reindex = async () => {
             }`
           )
         id == 'unknown id' &&
-          logger.error(`>>> Error: unknown id on record: ${record}`)
+          logger.error(`Error: unknown id on record: ${JSON.stringify(record)}`)
         // Continue without pushing data downstream
         callback()
       }

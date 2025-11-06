@@ -126,6 +126,8 @@ function createIndexBody(
   createStatusHistory(body, task)
 
   const assignment = findAssignment(bundle)
+
+  console.log('assignment :>> ', JSON.stringify(assignment))
   body.assignment =
     assignment && composeAssignment(assignment.office, assignment.practitioner)
 }
