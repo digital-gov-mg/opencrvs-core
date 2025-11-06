@@ -63,19 +63,15 @@ export const reindex = async () => {
 
         callback(null, document)
       } catch (err) {
-        const id = (record as any)?.compositionId || 'unknown id'
+        const id = (record as any)?._id || 'unknown id'
         transformErrors.push(id)
         logger.error(
           `Error transforming record ${id}: ${(err as Error).message}`
         )
-        id == 'unknown id' &&
-          logger.error(
-            `>> Unknown id Full Error: ${err as Error} -- Stack trace: ${
-              err.stack
-            }`
-          )
-        id == 'unknown id' &&
-          logger.error(`Error: unknown id on record: ${JSON.stringify(record)}`)
+
+        logger.error(`Full Error: ${err as Error} -- Stack trace: ${err.stack}`)
+
+        logger.error(`Error transforming record: ${JSON.stringify(record)}`)
         // Continue without pushing data downstream
         callback()
       }
