@@ -32,6 +32,7 @@ import {
   findAllTasks
 } from '@opencrvs/commons/types'
 import { findName } from '@search/features/fhir/fhir-utils'
+import { logger } from '@opencrvs/commons'
 
 const client = getOrCreateClient()
 
@@ -217,6 +218,11 @@ export const composeAssignment = (
   office: SavedOffice,
   practitioner: SavedPractitioner
 ) => {
+  if (!office || !practitioner) {
+    logger.error(
+      `Error in composeAssignment (utils.ts): Missing office: ${JSON.stringify(office)} ---- or practitioner: ${JSON.stringify(practitioner)}`
+    )
+  }
   const practitionerName = findName(NAME_EN, practitioner.name)
   const practitionerFirstNames = practitionerName?.given?.join(' ') || ''
   const practitionerFamilyName = practitionerName?.family || ''

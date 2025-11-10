@@ -45,12 +45,36 @@ export const reindex = async () => {
 
   const stream = await streamAllRecords(true)
 
+  const transformErrors: string[] = []
+
   const transformedStreamData = new Transform({
     readableObjectMode: true,
     writableObjectMode: true,
     transform: (record: ValidRecord, _encoding, callback) => {
-      const transformRecordToDocument = eventTransformers[getEventType(record)]
-      callback(null, transformRecordToDocument(record))
+      try {
+        const transformRecordToDocument =
+          eventTransformers[getEventType(record)]
+        const document = transformRecordToDocument(record)
+
+        // If transformation returned null or invalid doc, skip it
+        if (!document || !document.compositionId) {
+          throw new Error(`Invalid transformed document for record`)
+        }
+
+        callback(null, document)
+      } catch (err) {
+        const id = (record as any)?._id || 'unknown id'
+        transformErrors.push(id)
+        logger.error(
+          `Error transforming record ${id}: ${(err as Error).message}`
+        )
+
+        logger.error(`Full Error: ${err as Error} -- Stack trace: ${err.stack}`)
+
+        logger.error(`Error transforming record: ${JSON.stringify(record)}`)
+        // Continue without pushing data downstream
+        callback()
+      }
     }
   })
 
@@ -90,6 +114,13 @@ export const reindex = async () => {
       2
     )} seconds`
   )
+
+  if (transformErrors.length) {
+    logger.error(
+      `Skipped ${transformErrors.length} record(s) due to transform errors`
+    )
+    logger.error(transformErrors.join(', '))
+  }
 
   if (droppedCompositionIds.length) {
     logger.error(`Could not index ${droppedCompositionIds.length} document(s)`)

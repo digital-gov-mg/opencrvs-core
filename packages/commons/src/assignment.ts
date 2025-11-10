@@ -25,6 +25,7 @@ import {
   SavedPractitioner,
   SavedBundle
 } from './fhir'
+import { logger } from './logger'
 
 export const findAssignment = <T extends SavedBundle>(bundle: T) => {
   const task = getTaskFromSavedBundle(bundle)
@@ -72,6 +73,15 @@ export const findAssignment = <T extends SavedBundle>(bundle: T) => {
       practitionerId
     )!
     const office = findResourceFromBundleById<SavedOffice>(bundle, officeId)!
+
+    if (!office) {
+      logger.error(`Error finding office for office id: ${officeId}`)
+    }
+    if (!practitioner) {
+      logger.error(
+        `Error finding practitioner for practitioner id: ${practitionerId} `
+      )
+    }
 
     return { practitioner, office }
   }
