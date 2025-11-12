@@ -13,9 +13,13 @@ import { IScriptTag, IStyleTag } from '@client/utils/referenceApi'
 import * as React from 'react'
 import { useSelector } from 'react-redux'
 
-const setAttributesForScriptTag = (scriptElement: HTMLScriptElement, scriptTag?: IScriptTag) => {
+const setAttributesForScriptTag = (
+  scriptElement: HTMLScriptElement,
+  scriptTag?: IScriptTag
+) => {
   if (scriptTag?.options) {
-    const { async, defer, nomodule, onload, onerror, crossorigin, integrity } = scriptTag.options
+    const { async, defer, nomodule, onload, onerror, crossorigin, integrity } =
+      scriptTag.options
     if (async) scriptElement.async = true
     if (defer) scriptElement.defer = true
     if (nomodule) scriptElement.setAttribute('nomodule', '')
@@ -27,9 +31,13 @@ const setAttributesForScriptTag = (scriptElement: HTMLScriptElement, scriptTag?:
   scriptElement.setAttribute('data-custom', 'true')
 }
 
-const setAttributesForStyleTag = (styleElement: HTMLLinkElement, styleTag?: IStyleTag) => {
+const setAttributesForStyleTag = (
+  styleElement: HTMLLinkElement,
+  styleTag?: IStyleTag
+) => {
   if (styleTag?.options) {
-    const { media, crossorigin, integrity, title, disabled, type } = styleTag.options
+    const { media, crossorigin, integrity, title, disabled, type } =
+      styleTag.options
 
     if (media) styleElement.media = media
     if (crossorigin) styleElement.setAttribute('crossorigin', crossorigin)
@@ -49,15 +57,23 @@ export function useAdvancedFrontendCustomizations() {
       if (customizations.customFiles) {
         // Handle custom script and CSS files from country config
 
-        fetch(new URL('/custom-files', window.config.COUNTRY_CONFIG_URL).toString())
+        fetch(
+          new URL('/custom-files', window.config.COUNTRY_CONFIG_URL).toString()
+        )
           .then((response) => response.json())
           .then((data) => {
             // Handle custom JS files
             if (data.scripts && data.scripts.length > 0) {
               data.scripts.forEach((scriptTag: IScriptTag) => {
                 if (scriptTag.activateOn.includes('client')) {
-                  const url = new URL(scriptTag.url, window.config.COUNTRY_CONFIG_URL).toString();
-                  if (!document.querySelector(`script[src="${url}"]`) && scriptTag.activateOn.includes('client')) {
+                  const url = new URL(
+                    scriptTag.url,
+                    window.config.COUNTRY_CONFIG_URL
+                  ).toString()
+                  if (
+                    !document.querySelector(`script[src="${url}"]`) &&
+                    scriptTag.activateOn.includes('client')
+                  ) {
                     const scriptElement = document.createElement('script')
                     scriptElement.src = url
                     scriptElement.type = 'text/javascript'
@@ -73,7 +89,10 @@ export function useAdvancedFrontendCustomizations() {
             if (data.styles && data.styles.length > 0) {
               data.styles.forEach((styleTag: IStyleTag) => {
                 if (styleTag.activateOn.includes('client')) {
-                  const url = new URL(styleTag.url, window.config.COUNTRY_CONFIG_URL).toString();
+                  const url = new URL(
+                    styleTag.url,
+                    window.config.COUNTRY_CONFIG_URL
+                  ).toString()
 
                   if (!document.querySelector(`link[href="${url}"]`)) {
                     const linkElement = document.createElement('link')
@@ -126,11 +145,15 @@ export function useAdvancedFrontendCustomizations() {
 
     // Cleanup function to remove added elements when component unmounts
     return () => {
-      const customScripts = document.querySelectorAll('script[data-custom="true"]')
-      const customStyles = document.querySelectorAll('style[data-custom="true"], link[data-custom="true"]')
+      const customScripts = document.querySelectorAll(
+        'script[data-custom="true"]'
+      )
+      const customStyles = document.querySelectorAll(
+        'style[data-custom="true"], link[data-custom="true"]'
+      )
 
-      customScripts.forEach(script => script.remove())
-      customStyles.forEach(style => style.remove())
+      customScripts.forEach((script) => script.remove())
+      customStyles.forEach((style) => style.remove())
     }
   }, [customizations])
 }

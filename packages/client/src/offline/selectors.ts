@@ -109,7 +109,11 @@ export function selectApplicationName(store: IStoreState) {
 }
 
 export function selectAdvancedFrontendCustomizations(store: IStoreState) {
-  return getKey(store, 'offlineData').config?.ADVANCED_FRONTEND_CUSTOMIZATIONS || getKey(store, 'offlineData').anonymousConfig?.ADVANCED_FRONTEND_CUSTOMIZATIONS
+  return (
+    getKey(store, 'offlineData').config?.ADVANCED_FRONTEND_CUSTOMIZATIONS ||
+    getKey(store, 'offlineData').anonymousConfig
+      ?.ADVANCED_FRONTEND_CUSTOMIZATIONS
+  )
 }
 
 export const getOfflineLoadingError = (

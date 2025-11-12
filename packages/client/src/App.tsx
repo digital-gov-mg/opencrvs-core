@@ -542,7 +542,7 @@ export function App({ client, store, router }: IAppProps) {
   /** Global load frontend customizations */
   const AdvancedCustomizationsComponent = () => {
     useAdvancedFrontendCustomizations()
-    return null;
+    return null
   }
 
   return (
