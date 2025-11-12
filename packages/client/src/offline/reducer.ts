@@ -91,16 +91,19 @@ export interface CRVSOffice extends ILocation {
   physicalType: 'Building'
 }
 
+export interface IForms {
+  version: string
+  birth: ISerializedForm
+  death: ISerializedForm
+  marriage: ISerializedForm
+}
 export interface IOfflineData {
   locations: ILocationDataResponse
-  forms: {
-    version: string
-    birth: ISerializedForm
-    death: ISerializedForm
-    marriage: ISerializedForm
-  }
+  forms: IForms
   facilities: IFacilitiesDataResponse
+  activeFacilities: IFacilitiesDataResponse
   offices: IOfficesDataResponse
+  activeOffices: IOfficesDataResponse
   languages: ILanguage[]
   templates: {
     fonts?: CertificateConfiguration['fonts']
@@ -256,7 +259,7 @@ const HANDLEBARS_CMD = Cmd.run(() => initHandlebarHelpers(), {
 })
 
 const RETRY_TIMEOUT = 5000
-
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 function delay(cmd: RunCmd<any>, time: number) {
   return Cmd.list(
     [Cmd.run(() => new Promise((resolve) => setTimeout(resolve, time))), cmd],
@@ -557,6 +560,11 @@ function reducer(
 
     case actions.FACILITIES_LOADED: {
       const facilities = filterLocations(action.payload, 'HEALTH_FACILITY')
+      const activeFacilities = Object.fromEntries(
+        Object.entries(facilities).filter(
+          ([, facility]) => facility.status === 'active'
+        )
+      )
 
       const offices = filterLocations(
         action.payload,
@@ -575,12 +583,20 @@ function reducer(
               state.userDetails.primaryOffice.id
         }*/
       )
+      const activeOffices = Object.fromEntries(
+        Object.entries(offices).filter(
+          ([, office]) => office.status === 'active'
+        )
+      )
+
       return {
         ...state,
         offlineData: {
           ...state.offlineData,
           facilities,
-          offices
+          activeFacilities,
+          offices,
+          activeOffices
         }
       }
     }

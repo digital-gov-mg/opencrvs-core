@@ -31,7 +31,7 @@ import { printPDF } from '@client/pdfRenderer'
 import { getUserDetails } from '@client/profile/profileSelectors'
 import { IStoreState } from '@client/store'
 import { formatLongDate } from '@client/utils/date-formatting'
-import { SCOPES } from '@opencrvs/commons/client'
+import { SCOPES, isMinioUrl } from '@opencrvs/commons/client'
 import { EventType } from '@client/utils/gateway'
 import { getLocationHierarchy } from '@client/utils/locationUtils'
 import { getUserName, UserDetails } from '@client/utils/userUtils'
@@ -48,9 +48,10 @@ import { usePermissions } from '@client/hooks/useAuthorization'
 import { useNavigate } from 'react-router-dom'
 import { ICertificateData } from '@client/utils/referenceApi'
 import { fetchImageAsBase64 } from '@client/utils/imageUtils'
-import { isMinioUrl } from '@opencrvs/commons/client'
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 async function replaceMinioUrlWithBase64(template: Record<string, any>) {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   async function recursiveTransform(obj: any) {
     if (typeof obj !== 'object' || obj === null) {
       return obj
@@ -169,7 +170,12 @@ export const usePrintableCertificate = (declarationId?: string) => {
 
   const svgWithoutFonts = compileSvg(
     svgTemplate,
-    { ...declaration?.data.template, preview: true },
+    {
+      ...declaration?.data.template,
+      preview: true,
+      // TODO: declarationId is used to get certificate collector info while collecting certification
+      declarationId: declaration?.id
+    },
     state
   )
   const svgCode = addFontsToSvg(svgWithoutFonts, certificateFonts)
@@ -207,10 +213,14 @@ export const usePrintableCertificate = (declarationId?: string) => {
     const base64ReplacedTemplate = await replaceMinioUrlWithBase64(
       draft.data.template
     )
-
     const svg = compileSvg(
       svgTemplate,
-      { ...base64ReplacedTemplate, preview: false },
+      {
+        ...base64ReplacedTemplate,
+        preview: false,
+        // TODO: declarationId is used to get certificate collector info while collecting certification
+        declarationId: declaration?.id
+      },
       state
     )
     draft.data.registration = {

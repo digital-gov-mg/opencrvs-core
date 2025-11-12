@@ -8,86 +8,90 @@
  *
  * Copyright (C) The OpenCRVS Authors located at https://github.com/opencrvs/opencrvs-core/blob/master/AUTHORS.
  */
+import { IDeclaration } from '@client/declarations'
 import {
-  IFormField,
-  Ii18nFormField,
-  ISelectOption,
-  IFormSectionData,
-  SELECT_WITH_OPTIONS,
-  RADIO_GROUP,
+  BULLET_LIST,
+  BUTTON,
   CHECKBOX_GROUP,
-  IRadioOption,
+  DATE,
+  DependencyInfo,
+  DOCUMENT_UPLOADER_WITH_OPTION,
+  FETCH_BUTTON,
+  FIELD_WITH_DYNAMIC_DEFINITIONS,
+  HIDDEN,
+  HTTP,
+  IButtonFormField,
   ICheckboxOption,
-  ISelectFormFieldWithDynamicOptions,
-  INFORMATIVE_RADIO_GROUP,
-  PARAGRAPH,
+  ID_READER,
+  IDateFormField,
+  IDocumentUploaderWithOptionsFormField,
+  IDReaderFormField,
+  IDynamicFormField,
+  IDynamicFormFieldValidators,
   IDynamicListFormField,
   IDynamicValueMapper,
-  IFormData,
-  IDynamicFormFieldValidators,
-  IDynamicFormField,
-  FETCH_BUTTON,
-  ILoaderButton,
   IFieldInput,
-  IFormSection,
-  IQuery,
-  DATE,
-  IDateFormField,
-  IFormSectionGroup,
-  IRadioGroupFormField,
-  RADIO_GROUP_WITH_NESTED_FIELDS,
-  DOCUMENT_UPLOADER_WITH_OPTION,
+  IFormData,
+  IFormField,
   IFormFieldValue,
-  FIELD_WITH_DYNAMIC_DEFINITIONS,
-  IRadioGroupWithNestedFieldsFormField,
-  ISelectFormFieldWithOptions,
-  BULLET_LIST,
-  HIDDEN,
-  Ii18nHiddenFormField,
-  IDocumentUploaderWithOptionsFormField,
-  HTTP,
-  InitialValue,
-  DependencyInfo,
+  IFormSection,
+  IFormSectionData,
+  IFormSectionGroup,
   IHttpFormField,
-  IButtonFormField,
-  BUTTON,
   Ii18nButtonFormField,
-  ILinkButtonFormField,
-  LINK_BUTTON,
-  IDReaderFormField,
-  ID_READER,
+  Ii18nFormField,
+  Ii18nHiddenFormField,
   Ii18nIDReaderFormField,
+  Ii18nLoaderFormField,
+  ILinkButtonFormField,
+  ILoaderButton,
+  ILoaderFormField,
+  INFORMATIVE_RADIO_GROUP,
+  InitialValue,
+  IQuery,
+  IRadioGroupFormField,
+  IRadioGroupWithNestedFieldsFormField,
+  IRadioOption,
+  ISelectFormFieldWithDynamicOptions,
+  ISelectFormFieldWithOptions,
+  ISelectOption,
+  LINK_BUTTON,
+  LOADER,
+  PARAGRAPH,
   QRReaderType,
+  RADIO_GROUP,
+  RADIO_GROUP_WITH_NESTED_FIELDS,
   ReaderType,
-  SELECT_WITH_DYNAMIC_OPTIONS
+  ResourceType,
+  SELECT_WITH_DYNAMIC_OPTIONS,
+  SELECT_WITH_OPTIONS
 } from '@client/forms'
-import { IntlShape, MessageDescriptor } from 'react-intl'
 import {
+  Errors,
   getValidationErrorsForForm,
-  IFieldErrors,
-  Errors
+  IFieldErrors
 } from '@client/forms/validation'
-import {
-  OFFLINE_LOCATIONS_KEY,
-  OFFLINE_FACILITIES_KEY,
-  ILocation,
-  IOfflineData
-} from '@client/offline/reducer'
-import {
-  Validation,
-  isAValidDateFormat,
-  isDateNotInFuture
-} from '@client/utils/validate'
-import { IRadioOption as CRadioOption } from '@opencrvs/components/lib/Radio'
 import { IDynamicValues } from '@client/navigation'
-import { callingCountries } from 'country-data'
-import { IDeclaration } from '@client/declarations'
-import differenceInDays from 'date-fns/differenceInDays'
-import { PhoneNumberUtil, PhoneNumberFormat } from 'google-libphonenumber'
-import { Conditional } from './conditionals'
+import {
+  ILocation,
+  IOfflineData,
+  OFFLINE_FACILITIES_KEY,
+  OFFLINE_LOCATIONS_KEY
+} from '@client/offline/reducer'
 import { UserDetails } from '@client/utils/userUtils'
+import {
+  isAValidDateFormat,
+  isDateNotInFuture,
+  Validation
+} from '@client/utils/validate'
 import * as SupportedIcons from '@opencrvs/components/lib/Icon/all-icons'
+import { IRadioOption as CRadioOption } from '@opencrvs/components/lib/Radio'
+import { callingCountries } from 'country-data'
+import differenceInDays from 'date-fns/differenceInDays'
+import { PhoneNumberFormat, PhoneNumberUtil } from 'google-libphonenumber'
 import { memoize } from 'lodash'
+import { IntlShape, MessageDescriptor } from 'react-intl'
+import { Conditional } from './conditionals'
 
 export const VIEW_TYPE = {
   FORM: 'form',
@@ -156,10 +160,12 @@ export const internationaliseFieldObject = (
     base.type === CHECKBOX_GROUP ||
     base.type === DOCUMENT_UPLOADER_WITH_OPTION
   ) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     ;(base as any).options = internationaliseOptions(intl, base.options)
   }
 
   if (base.type === BULLET_LIST) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     ;(base as any).items = internationaliseListFieldObject(intl, base.items)
   }
 
@@ -167,8 +173,10 @@ export const internationaliseFieldObject = (
     base.type === RADIO_GROUP ||
     base.type === RADIO_GROUP_WITH_NESTED_FIELDS
   ) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     ;(base as any).options = internationaliseOptions(intl, base.options)
     if ((field as IDateFormField).notice) {
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       ;(base as any).notice = intl.formatMessage(
         // @ts-ignore
         (field as IRadioGroupFormField).notice
@@ -177,6 +185,7 @@ export const internationaliseFieldObject = (
   }
 
   if (base.type === DATE && (field as IDateFormField).notice) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     ;(base as any).notice = intl.formatMessage(
       // @ts-ignore
       (field as IDateFormField).notice
@@ -184,12 +193,15 @@ export const internationaliseFieldObject = (
   }
 
   if (base.type === FETCH_BUTTON) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     ;(base as any).modalTitle = intl.formatMessage(
       (field as ILoaderButton).modalTitle
     )
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     ;(base as any).successTitle = intl.formatMessage(
       (field as ILoaderButton).successTitle
     )
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     ;(base as any).errorTitle = intl.formatMessage(
       (field as ILoaderButton).errorTitle
     )
@@ -212,6 +224,12 @@ export const internationaliseFieldObject = (
     )
     ;(base as Ii18nIDReaderFormField).manualInputInstructionLabel =
       intl.formatMessage(field.manualInputInstructionLabel)
+  }
+
+  if (isFieldLoader(field)) {
+    ;(base as Ii18nLoaderFormField).loadingText = intl.formatMessage(
+      field.loadingText
+    )
   }
 
   return base as Ii18nFormField
@@ -302,6 +320,7 @@ export const getFieldValidation = (
   ) {
     field.dynamicDefinitions.validator.map(
       (element: IDynamicFormFieldValidators) => {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         const params: any[] = []
         element.dependencies.map((dependency: string) =>
           params.push(values[dependency])
@@ -489,6 +508,7 @@ const getMemoisedFieldOptions = memoize(
 )
 
 interface INested {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   [key: string]: any
 }
 
@@ -569,7 +589,15 @@ export function isDefaultCountry(countryCode: string): boolean {
   return countryCode === window.config.COUNTRY.toUpperCase()
 }
 
+export function getListOfLocations(
+  resource: IOfflineData,
+  resourceType: ResourceType
+) {
+  return resource[resourceType]
+}
+
 interface IVars {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   [key: string]: any
 }
 
@@ -615,20 +643,18 @@ export const getConditionalActionsForField = (
   if (!field.conditionals) {
     return []
   }
-  return (
-    field.conditionals
-      // eslint-disable-next-line no-eval
-      .filter((conditional) =>
-        evalExpressionInFieldDefinition(
-          conditional.expression,
-          values,
-          offlineCountryConfig,
-          draftData,
-          userDetails
-        )
+  return field.conditionals
+
+    .filter((conditional) =>
+      evalExpressionInFieldDefinition(
+        conditional.expression,
+        values,
+        offlineCountryConfig,
+        draftData,
+        userDetails
       )
-      .map((conditional: Conditional) => conditional.action)
-  )
+    )
+    .map((conditional: Conditional) => conditional.action)
 }
 
 export const evalExpressionInFieldDefinition = (
@@ -642,12 +668,11 @@ export const evalExpressionInFieldDefinition = (
   $user: (UserDetails & { token?: string }) | null
 ) => {
   // For backwards compatibility
-  /* eslint-disable @typescript-eslint/no-unused-vars */
+
   const values = $form
   const offlineCountryConfig = $config
   const draftData = $draft
   const userDetails = $user
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   // eslint-disable-next-line no-eval
   return eval(expression)
@@ -659,7 +684,6 @@ export const getVisibleSectionGroupsBasedOnConditions = (
   draftData?: IFormData,
   userDetails?: UserDetails | null
 ): IFormSectionGroup[] => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const values = sectionData
 
   // handling all possible group visibility conditionals
@@ -815,8 +839,12 @@ export function isFieldButton(field: IFormField): field is IButtonFormField {
   return field.type === BUTTON
 }
 
-function isFieldIDReader(field: IFormField): field is IDReaderFormField {
+export function isFieldIDReader(field: IFormField): field is IDReaderFormField {
   return field.type === ID_READER
+}
+
+function isFieldLoader(field: IFormField): field is ILoaderFormField {
+  return field.type === LOADER
 }
 
 export function isReaderQR(reader: ReaderType): reader is QRReaderType {
