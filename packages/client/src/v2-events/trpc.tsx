@@ -25,10 +25,12 @@ import {
   createTRPCContext,
   createTRPCOptionsProxy
 } from '@trpc/tanstack-react-query'
+import { partition } from 'lodash'
 import React from 'react'
 import superjson from 'superjson'
-import { storage } from '@client/storage'
+import { getUUID } from '@opencrvs/commons/client'
 import { getToken } from '@client/utils/authUtils'
+import { storage } from '@client/storage'
 
 const { TRPCProvider: TRPCProviderRaw, useTRPC } =
   createTRPCContext<AppRouter>()
@@ -69,22 +71,87 @@ function getQueryClient() {
   })
 }
 
-function createIDBPersister(idbValidKey = 'reactQuery') {
+function createIDBPersister(storageIdentifier: string) {
+  const fullStorageIdentifier = `react-query-${storageIdentifier}`
+  const largeQueryStorageIdentifier = `react-query-large-query-storage-${storageIdentifier}`
+
   return {
+    /** By default, client is persisted whenever a query/mutation occurs */
     persistClient: async (client) => {
-      await storage.setItem(idbValidKey, client)
+      /* 1. Since queries are persisted frequently, we separate out the ones that are flagged as large.
+       * Serializing data is a synchronous process and freezes the client, so we want to minimise how often it happens.
+       * For large payloads, ensure staleTime is set for queries to avoid frequent updates.
+       */
+      const [largeQueries, normalQueries] = partition(
+        client.clientState.queries,
+        (query) => query.meta?.useLargeQueryStorage === true
+      )
+
+      const clientWithoutLargeQueries = {
+        ...client,
+        clientState: {
+          ...client.clientState,
+          queries: normalQueries
+        }
+      }
+
+      // 2. Persist the main client without large queries
+      await storage.setItem(fullStorageIdentifier, clientWithoutLargeQueries)
+
+      // 3. Persist large queries only if they have changed since the last persist to avoid unnecessary serialization.
+      const changed = largeQueries.some((query) => {
+        if (query.state.status !== 'success') {
+          return false
+        }
+
+        if (query.state.fetchStatus === 'fetching') {
+          return false
+        }
+
+        const updatedAt = query.state.dataUpdatedAt
+        const dehydratedAt = query.dehydratedAt
+
+        // During the first load updatedAt === dehydratedAt.
+        return dehydratedAt === undefined || updatedAt >= dehydratedAt
+      })
+
+      if (changed) {
+        await storage.setItem(largeQueryStorageIdentifier, largeQueries)
+      }
     },
+    /** Restore client from storage on page change / refresh. Expected to happen more rarely. */
     restoreClient: async () => {
-      const client = await storage.getItem<PersistedClient>(idbValidKey)
-      return client || undefined
+      const client = await storage.getItem<PersistedClient>(
+        fullStorageIdentifier
+      )
+
+      if (!client) {
+        return undefined
+      }
+
+      const largeQueries = await storage.getItem<
+        PersistedClient['clientState']['queries']
+      >(largeQueryStorageIdentifier)
+
+      // 4. Re-attach large queries to the client to provide consistent state.
+      if (largeQueries) {
+        return {
+          ...client,
+          clientState: {
+            ...client.clientState,
+            queries: [...client.clientState.queries, ...largeQueries]
+          }
+        }
+      }
+
+      return client
     },
     removeClient: async () => {
-      await storage.removeItem(idbValidKey)
+      await storage.removeItem(fullStorageIdentifier)
+      await storage.removeItem(largeQueryStorageIdentifier)
     }
   } satisfies Persister
 }
-
-const persister = createIDBPersister()
 
 export const trpcClient = getTrpcClient()
 
@@ -94,12 +161,28 @@ export const trpcOptionsProxy = createTRPCOptionsProxy({
   client: trpcClient
 })
 
-export function TRPCProvider({ children }: { children: React.ReactNode }) {
+export function TRPCProvider({
+  children,
+  /*
+   * Should never be "false" outside test environments where we might want to get access
+   * to the query client before the client is restored from the persisted storage.
+   */
+  waitForClientRestored = true,
+  // In cases where multiple Storybooks are running against the same origin, when run in parallel, they may interfere with each other
+  // When tests are fast. Generate UUID to isolate storage for each Storybook instance. App uses userId for this purpose.
+  storeIdentifier = `DEFAULT_IDENTIFIER_FOR_TESTS_ONLY__THIS_SHOULD_NEVER_SHOW_OUTSIDE_STORYBOOK_${getUUID()}`
+}: {
+  children: React.ReactNode
+  storeIdentifier?: string
+  waitForClientRestored?: boolean
+}) {
+  const [queriesRestored, setQueriesRestored] = React.useState(false)
+
   return (
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
-        persister,
+        persister: createIDBPersister(storeIdentifier),
         buster: 'persisted-indexed-db',
         maxAge: undefined,
         dehydrateOptions: {
@@ -118,6 +201,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
         }
       }}
       onSuccess={async () => {
+        setQueriesRestored(true)
         await queryClient.resumePausedMutations()
 
         const mutations = queryClient.getMutationCache().getAll()
@@ -128,7 +212,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       <TRPCProviderRaw queryClient={queryClient} trpcClient={trpcClient}>
-        {children}
+        {!waitForClientRestored || queriesRestored ? children : null}
       </TRPCProviderRaw>
     </PersistQueryClientProvider>
   )

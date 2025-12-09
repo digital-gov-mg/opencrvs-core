@@ -2,7 +2,6 @@ ARG  VERSION=dev
 FROM siecm/ocrvs-core:${VERSION}
 
 USER node
-
 WORKDIR /app/packages/auth
 COPY --chown=node:node packages/auth/*.json /app/packages/auth/
 RUN yarn install --frozen-lockfile

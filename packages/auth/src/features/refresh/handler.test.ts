@@ -18,6 +18,14 @@ import * as fetchAny from 'jest-fetch-mock'
 const fetch = fetchAny as fetchAny.FetchMock
 import { AuthenticateResponse } from '@auth/features/authenticate/handler'
 
+jest.mock('@auth/features/verifyCode/service', () => {
+  const actual = jest.requireActual('@auth/features/verifyCode/service')
+  return {
+    ...actual,
+    sendVerificationCode: jest.fn().mockResolvedValue(undefined)
+  }
+})
+
 describe('authenticate handler receives a request', () => {
   let server: AuthServer
 
@@ -88,8 +96,6 @@ describe('authenticate handler receives a request', () => {
       const [, payload] = token.split('.')
       const body = JSON.parse(Buffer.from(payload, 'base64').toString())
       expect(body.scope).toEqual([
-        SCOPES.SYSADMIN,
-        SCOPES.NATLSYSADMIN,
         SCOPES.USER_CREATE,
         SCOPES.USER_READ,
         SCOPES.USER_UPDATE,
@@ -111,7 +117,7 @@ describe('authenticate handler receives a request', () => {
       jest.spyOn(authService, 'authenticate').mockReturnValue({
         id: '1',
         role: 'NATIONAL_SYSTEM_ADMIN',
-        scope: ['natlsysadmin'],
+        scope: [],
         username: '+345345343'
       })
 

@@ -67,7 +67,7 @@ describe('User root resolvers', () => {
         Authorization: `Bearer ${sysAdminToken}`
       }
       const declareToken = jwt.sign(
-        { scope: ['declare'] },
+        { scope: [] },
         readFileSync('./test/cert.key'),
         {
           subject: 'ba7022f0ff4822',
@@ -328,6 +328,8 @@ describe('User root resolvers', () => {
               id: 'userRole.fieldAgent'
             },
             scopes: [
+              'record.create[event=birth|death|tennis-club-membership]',
+              'record.declare[event=birth|death|tennis-club-membership]',
               SCOPES.RECORD_DECLARE_BIRTH,
               SCOPES.RECORD_DECLARE_DEATH,
               SCOPES.RECORD_DECLARE_MARRIAGE,
@@ -357,6 +359,8 @@ describe('User root resolvers', () => {
               id: 'userRole.fieldAgent'
             },
             scopes: [
+              'record.create[event=birth|death|tennis-club-membership]',
+              'record.declare[event=birth|death|tennis-club-membership]',
               SCOPES.RECORD_DECLARE_BIRTH,
               SCOPES.RECORD_DECLARE_DEATH,
               SCOPES.RECORD_DECLARE_MARRIAGE,
@@ -425,6 +429,8 @@ describe('User root resolvers', () => {
               id: 'userRole.fieldAgent'
             },
             scopes: [
+              'record.create[event=birth|death|tennis-club-membership]',
+              'record.declare[event=birth|death|tennis-club-membership]',
               SCOPES.RECORD_DECLARE_BIRTH,
               SCOPES.RECORD_DECLARE_DEATH,
               SCOPES.RECORD_DECLARE_MARRIAGE,
@@ -454,6 +460,8 @@ describe('User root resolvers', () => {
               id: 'userRole.fieldAgent'
             },
             scopes: [
+              'record.create[event=birth|death|tennis-club-membership]',
+              'record.declare[event=birth|death|tennis-club-membership]',
               SCOPES.RECORD_DECLARE_BIRTH,
               SCOPES.RECORD_DECLARE_DEATH,
               SCOPES.RECORD_DECLARE_MARRIAGE,
@@ -544,6 +552,8 @@ describe('User root resolvers', () => {
               id: 'userRole.fieldAgent'
             },
             scopes: [
+              'record.create[event=birth|death|tennis-club-membership]',
+              'record.declare[event=birth|death|tennis-club-membership]',
               SCOPES.RECORD_DECLARE_BIRTH,
               SCOPES.RECORD_DECLARE_DEATH,
               SCOPES.RECORD_DECLARE_MARRIAGE,
@@ -608,7 +618,7 @@ describe('User root resolvers', () => {
     beforeEach(() => {
       fetch.resetMocks()
       const declareToken = jwt.sign(
-        { scope: ['declare'] },
+        { scope: [] },
         readFileSync('./test/cert.key'),
         {
           subject: 'ba7022f0ff4822',
@@ -627,7 +637,7 @@ describe('User root resolvers', () => {
         JSON.stringify({
           username: 'sakibal.hasan',
           id: '123',
-          scope: ['declare'],
+          scope: [],
           status: 'active'
         })
       )
@@ -1463,7 +1473,7 @@ describe('User root resolvers', () => {
         Authorization: `Bearer ${sysAdminToken}`
       }
       const validateToken = jwt.sign(
-        { scope: ['validate'] },
+        { scope: [] },
         readFileSync('./test/cert.key'),
         {
           subject: 'ba7022f0ff4822',
@@ -1539,7 +1549,7 @@ describe('User root resolvers', () => {
         Authorization: `Bearer ${sysAdminToken}`
       }
       const validateToken = jwt.sign(
-        { scope: ['validate'] },
+        { scope: [] },
         readFileSync('./test/cert.key'),
         {
           subject: 'ba7022f0ff4822',
@@ -1615,7 +1625,7 @@ describe('User root resolvers', () => {
         Authorization: `Bearer ${sysAdminToken}`
       }
       const validateToken = jwt.sign(
-        { scope: ['validate'] },
+        { scope: [] },
         readFileSync('./test/cert.key'),
         {
           subject: 'ba7022f0ff4822',

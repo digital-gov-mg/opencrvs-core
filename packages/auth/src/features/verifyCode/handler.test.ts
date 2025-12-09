@@ -16,6 +16,14 @@ import {
 } from '@opencrvs/commons/authentication'
 import * as fetchMock from 'jest-fetch-mock'
 
+jest.mock('@opencrvs/commons', () => {
+  const actual = jest.requireActual('@opencrvs/commons')
+  return {
+    ...actual,
+    triggerUserEventNotification: jest.fn()
+  }
+})
+
 const fetch: fetchMock.FetchMock = fetchMock as fetchMock.FetchMock
 import { AuthenticateResponse } from '@auth/features/authenticate/handler'
 
@@ -80,8 +88,6 @@ describe('authenticate handler receives a request', () => {
       const [, payload] = res.result!.token.split('.')
       const body = JSON.parse(Buffer.from(payload, 'base64').toString())
       expect(body.scope).toEqual([
-        SCOPES.SYSADMIN,
-        SCOPES.NATLSYSADMIN,
         SCOPES.USER_CREATE,
         SCOPES.USER_READ,
         SCOPES.USER_UPDATE,
