@@ -11,7 +11,9 @@
 import {
   Scope,
   SCOPES,
-  DEFAULT_ROLES_DEFINITION
+  DEFAULT_ROLES_DEFINITION,
+  TestUserRole,
+  TokenUserType
 } from '@opencrvs/commons/client'
 import { EventType, Status, FetchUserQuery } from '@client/utils/gateway'
 import { UserDetails } from '@client/utils/userUtils'
@@ -94,11 +96,7 @@ export const REGISTRAR_DEFAULT_SCOPES = [
   SCOPES.RECORD_DECLARATION_REINSTATE,
   SCOPES.RECORD_REGISTER,
   SCOPES.RECORD_REGISTRATION_CORRECT,
-  SCOPES.RECORD_PRINT_RECORDS_SUPPORTING_DOCUMENTS,
-  SCOPES.RECORD_EXPORT_RECORDS,
   SCOPES.RECORD_PRINT_ISSUE_CERTIFIED_COPIES,
-  SCOPES.RECORD_REGISTRATION_VERIFY_CERTIFIED_COPIES,
-  SCOPES.RECORD_CREATE_COMMENTS,
   SCOPES.PERFORMANCE_READ,
   SCOPES.PERFORMANCE_READ_DASHBOARDS,
   SCOPES.ORGANISATION_READ_LOCATIONS,
@@ -117,11 +115,7 @@ export const REGISTRATION_AGENT_DEFAULT_SCOPES = [
   SCOPES.RECORD_DECLARATION_ARCHIVE,
   SCOPES.RECORD_DECLARATION_REINSTATE,
   SCOPES.RECORD_REGISTRATION_REQUEST_CORRECTION,
-  SCOPES.RECORD_PRINT_RECORDS_SUPPORTING_DOCUMENTS,
-  SCOPES.RECORD_EXPORT_RECORDS,
   SCOPES.RECORD_PRINT_ISSUE_CERTIFIED_COPIES,
-  SCOPES.RECORD_REGISTRATION_VERIFY_CERTIFIED_COPIES,
-  SCOPES.RECORD_CREATE_COMMENTS,
   SCOPES.PERFORMANCE_READ,
   SCOPES.PERFORMANCE_READ_DASHBOARDS,
   SCOPES.ORGANISATION_READ_LOCATIONS,
@@ -353,6 +347,7 @@ export const userDetails: UserDetails = {
     { use: 'bn', firstNames: '', familyName: '' }
   ],
   role: {
+    id: TestUserRole.Enum.FIELD_AGENT,
     label: {
       defaultMessage: 'Field Agent',
       description: 'Name for user role Field Agent',
@@ -1188,6 +1183,7 @@ export function loginAsFieldAgent(store: AppStore) {
           practitionerId: '778464c0-08f8-4fb7-8a37-b86d1efc462a',
           mobile: '+8801711111111',
           role: {
+            id: 'CHA',
             label: {
               id: 'userRoles.CHA',
               defaultMessage: 'CHA',
@@ -1301,11 +1297,11 @@ export const mockFetchRoleGraphqlOperation = {
           scopes: [SCOPES.RECORD_DECLARE_DEATH]
         },
         {
-          id: 'SOCIAL_WORKER',
+          id: 'HOSPITAL_CLERK',
           label: {
-            defaultMessage: 'Social Worker',
-            description: 'Name for user role Social Worker',
-            id: 'userRole.socialWorker'
+            defaultMessage: 'Hospital Clerk',
+            description: 'Name for user role Hospital Clerk',
+            id: 'userRole.hospitalClerk'
           },
           scopes: [SCOPES.SEARCH_MARRIAGE]
         },
@@ -1319,11 +1315,11 @@ export const mockFetchRoleGraphqlOperation = {
           scopes: [SCOPES.SEARCH_BIRTH]
         },
         {
-          id: 'LOCAL_LEADER',
+          id: 'COMMUNITY_LEADER',
           label: {
-            defaultMessage: 'Local Leader',
-            description: 'Name for user role Local Leader',
-            id: 'userRole.localLeader'
+            defaultMessage: 'Community Leader',
+            description: 'Name for user role Community Leader',
+            id: 'userRole.communityLeader'
           },
           scopes: [SCOPES.SEARCH_MARRIAGE]
         },
@@ -1778,6 +1774,7 @@ export function fetchUserMock(officeId: string): FetchUserQuery {
       practitionerId: '4651d1cc-6072-4e34-bf20-b583f421a9f1',
       creationDate: '1701241360173',
       role: {
+        id: TestUserRole.Enum.LOCAL_SYSTEM_ADMIN,
         label: {
           id: 'userRoles.localSystemAdmin',
           defaultMessage: 'Local System Admin',
@@ -1788,12 +1785,40 @@ export function fetchUserMock(officeId: string): FetchUserQuery {
   }
 }
 
-export function setScopes(scope: Scope[], store: AppStore) {
-  const token = jwt.sign({ scope: scope }, readFileSync('./test/cert.key'), {
+export function generateToken({
+  scope,
+  userType,
+  role,
+  subject
+}: {
+  scope: Scope[]
+  subject?: string
+  userType?: TokenUserType
+  role?: TestUserRole
+}) {
+  if (subject) {
+    return jwt.sign(
+      { scope, userType, role },
+      readFileSync('./test/cert.key'),
+      {
+        subject,
+        algorithm: 'RS256',
+        issuer: 'opencrvs:auth-service',
+        audience: 'opencrvs:gateway-user'
+      }
+    )
+  }
+
+  return jwt.sign({ scope }, readFileSync('./test/cert.key'), {
     algorithm: 'RS256',
     issuer: 'opencrvs:auth-service',
     audience: 'opencrvs:gateway-user'
   })
+}
+
+export function setScopes(scope: Scope[], store: AppStore) {
+  const token = generateToken({ scope })
+
   window.history.replaceState({}, '', '?token=' + token)
 
   return store.dispatch({

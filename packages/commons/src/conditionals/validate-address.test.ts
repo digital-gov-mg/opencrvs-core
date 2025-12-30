@@ -9,9 +9,10 @@
  * Copyright (C) The OpenCRVS Authors located at https://github.com/opencrvs/opencrvs-core/blob/master/AUTHORS.
  */
 
-import { FieldType } from '../events/FieldType'
 import { AddressType } from '../events/CompositeFieldValue'
 import { mapFieldTypeToZod } from '../events/FieldTypeMapping'
+import { tennisClubMembershipEvent } from '../fixtures'
+import { FieldType } from '../index'
 
 const testCases = [
   {
@@ -26,9 +27,11 @@ const testCases = [
     address: {
       country: 'FAR',
       addressType: AddressType.DOMESTIC,
-      province: 'sadsad-sadsad-sadsadsd-sdsdsd',
-      district: 'gdgfhdfg-wwqret-dfgfgsd-ewrew',
-      urbanOrRural: 'URBAN'
+      administrativeArea: '27160bbd-32d1-4625-812f-860226bfb92a',
+      streetLevelDetails: {
+        state: 'state',
+        district2: 'district2'
+      }
     },
     success: true
   },
@@ -37,9 +40,14 @@ const testCases = [
     address: {
       country: 'BGD',
       addressType: AddressType.INTERNATIONAL,
-      province: 'sadsad-sadsad-sadsadsd-sdsdsd',
-      district: 'gdgfhdfg-wwqret-dfgfgsd-ewrew',
-      urbanOrRural: 'URBAN'
+      streetLevelDetails: [
+        {
+          streetName: 'Main St',
+          streetNumber: '123',
+          city: 'Dhaka',
+          postalCode: '1212'
+        }
+      ]
     },
     success: false
   },
@@ -48,8 +56,10 @@ const testCases = [
     address: {
       country: 'BGD',
       addressType: AddressType.INTERNATIONAL,
-      state: 'sadsad-sadsad-sadsadsd-sdsdsd',
-      district2: 'gdgfhdfg-wwqret-dfgfgsd-ewrew'
+      streetLevelDetails: {
+        state: 'state',
+        district2: 'district2'
+      }
     },
     success: true
   }
@@ -57,7 +67,15 @@ const testCases = [
 
 testCases.map(({ title, address, success }) => {
   test(title, () => {
-    const result = mapFieldTypeToZod(FieldType.ADDRESS).safeParse(address)
+    const addressConfig = tennisClubMembershipEvent.declaration.pages
+      .flatMap((page) => page.fields)
+      .find((f) => f.type === FieldType.ADDRESS)
+
+    if (!addressConfig) {
+      throw new Error('Address config not found')
+    }
+
+    const result = mapFieldTypeToZod(addressConfig).safeParse(address)
     expect(result.success).toBe(success)
   })
 })
