@@ -539,24 +539,11 @@ const mapStateToProps = (
       userOfficeId &&
       registeringOfficeId &&
       userOfficeId !== registeringOfficeId
-    console.log('=== isDifferentOffice:=== ', isDifferentOffice)
     collectorField.options = collectorField.options.map((opt) => ({
       ...opt,
       disabled: opt.value === 'PRINT_IN_ADVANCE' && isDifferentOffice
     }))
   }
-
-  console.log('=== DEBUG COLLECTOR FORM ===')
-  console.log('=== userOfficeId:=== ', userOfficeId)
-  console.log('=== registeringOfficeId:=== ', registeringOfficeId)
-  console.log('=== declaration:=== ', JSON.stringify(declaration))
-  console.log('=== isAllowPrintInAdvance:=== ', isAllowPrintInAdvance)
-  console.log(
-    '=== PRINT_IN_ADVANCE config:===',
-    getOfflineData(state).config.BIRTH?.PRINT_IN_ADVANCE
-  )
-  console.log('=== collectorField:=== ', JSON.stringify(collectorField))
-  console.log('=== formGroup:=== ', JSON.stringify(formGroup))
 
   const fields = replaceInitialValues(
     formGroup.fields,
