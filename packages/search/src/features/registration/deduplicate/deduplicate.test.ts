@@ -31,7 +31,7 @@ describe('deduplication tests', () => {
   afterAll(shutdown)
 
   describe('standard check', () => {
-    it('finds a duplicate with very similar details', async () => {
+    it('finds a duplicate with very similar details within 7 days', async () => {
       const t = await setupTestCases(setup)
 
       await expect(
@@ -41,15 +41,15 @@ describe('deduplication tests', () => {
             childFirstNames: ['John', 'Jonh'],
             // Similar child's lastname
             childFamilyName: ['Smith', 'Smith'],
-            // Date of birth within 5 days
+            // Date of birth within 5 days (within ±7 day limit)
             childDoB: ['2011-11-11', '2011-11-13'],
-            // Similar Mother’s firstname(s)
+            // Similar Mother's firstname(s)
             motherFirstNames: ['Mother', 'Mothera'],
-            // Similar Mother’s lastname.
+            // Similar Mother's lastname.
             motherFamilyName: ['Smith', 'Smith'],
-            // Similar Mother’s date of birth or Same Age of mother
+            // Similar Mother's date of birth (optional boost)
             motherDoB: ['2000-11-11', '2000-11-12'],
-            // Same mother’s NID
+            // Same mother's NID (optional boost)
             motherIdentifier: ['23412387', '23412387']
           },
           t.elasticClient
@@ -57,7 +57,7 @@ describe('deduplication tests', () => {
       ).resolves.toHaveLength(1)
     })
 
-    it('finds no duplicate with different mother nid', async () => {
+    it('finds a duplicate even with different mother nid if names and DOB match', async () => {
       const t = await setupTestCases(setup)
 
       await expect(
@@ -65,16 +65,16 @@ describe('deduplication tests', () => {
           {
             childFirstNames: ['John', 'John'],
             childFamilyName: ['Smith', 'Smith'],
-            childDoB: ['2011-11-11', '2011-11-11'],
+            childDoB: ['2011-11-11', '2011-11-13'], // Within 7 days
             motherFirstNames: ['Mother', 'Mother'],
             motherFamilyName: ['Smith', 'Smith'],
             motherDoB: ['2000-11-12', '2000-11-12'],
-            // Different mother’s NID
+            // Different mother's NID (but still should match due to name + DOB)
             motherIdentifier: ['23412387', '23412388']
           },
           t.elasticClient
         )
-      ).resolves.toHaveLength(0)
+      ).resolves.toHaveLength(1)
     })
 
     it('finds no duplicates with very different details', async () => {
@@ -85,7 +85,7 @@ describe('deduplication tests', () => {
           {
             childFirstNames: ['John', 'Mathew'],
             childFamilyName: ['Smith', 'Wilson'],
-            childDoB: ['2011-11-11', '1980-11-11'],
+            childDoB: ['2011-11-11', '2011-11-20'], // 9 days apart (outside ±7 day limit)
             motherFirstNames: ['Mother', 'Harriet'],
             motherFamilyName: ['Smith', 'Wilson'],
             motherDoB: ['2000-11-12', '1992-11-12'],
@@ -104,7 +104,7 @@ describe('deduplication tests', () => {
           {
             childFirstNames: ['John', ''],
             childFamilyName: ['Smith', ''],
-            childDoB: ['2011-11-11', '2014-11-01'],
+            childDoB: ['2011-11-11', '2011-11-13'], // Within 7 days
             motherFirstNames: ['Mother', 'Mother'],
             motherFamilyName: ['Smith', 'Smith'],
             motherDoB: ['2000-11-12', '2000-11-12']
@@ -114,14 +114,14 @@ describe('deduplication tests', () => {
       ).resolves.toHaveLength(0)
     })
 
-    it('finds a duplicate even if the firstName of child is not given', async () => {
+    it('finds a duplicate even if the firstName of child is not given but family name matches', async () => {
       const t = await setupTestCases(setup)
       await expect(
         compareForBirthDuplication(
           {
             childFirstNames: ['John', ''],
-            childFamilyName: ['Smith', 'Smiht'],
-            childDoB: ['2011-11-11', '2011-11-01'],
+            childFamilyName: ['Smith', 'Smiht'], // Family name matches (fuzzy)
+            childDoB: ['2011-11-11', '2011-11-13'], // Within 7 days
             motherFirstNames: ['Mother', 'Mother'],
             motherFamilyName: ['Smith', 'Smith'],
             motherDoB: ['2000-11-12', '2000-11-12']
@@ -131,7 +131,24 @@ describe('deduplication tests', () => {
       ).resolves.toHaveLength(1)
     })
 
-    it('finds no duplicate if a required field is missing', async () => {
+    it('finds a duplicate if only child first name matches (not family name)', async () => {
+      const t = await setupTestCases(setup)
+      await expect(
+        compareForBirthDuplication(
+          {
+            childFirstNames: ['John', 'John'], // First name matches
+            childFamilyName: ['Smith', 'Wilson'], // Family name differs
+            childDoB: ['2011-11-11', '2011-11-13'], // Within 7 days
+            motherFirstNames: ['Mother', 'Mother'],
+            motherFamilyName: ['Smith', 'Smith'],
+            motherDoB: ['2000-11-12', '2000-11-12']
+          },
+          t.elasticClient
+        )
+      ).resolves.toHaveLength(1)
+    })
+
+    it('finds no duplicate if a required field (childDoB) is missing', async () => {
       const t = await setupTestCases(setup)
 
       await expect(
@@ -139,7 +156,7 @@ describe('deduplication tests', () => {
           {
             childFirstNames: ['John', 'Jhon'],
             childFamilyName: ['Smith', 'Smith'],
-            childDoB: ['2011-11-11', ''],
+            childDoB: ['2011-11-11', ''], // Missing child DOB
             motherDoB: ['2000-11-12', '2000-11-12'],
             motherFirstNames: ['Mother', 'Mother'],
             motherFamilyName: ['Smith', 'Smith']
@@ -148,18 +165,16 @@ describe('deduplication tests', () => {
         )
       ).resolves.toHaveLength(0)
     })
-  })
 
-  describe('same mother two births within 9 months of each other', () => {
-    it('finds a duplicate with same mother two births within 9 months', async () => {
+    it('finds no duplicate if child DOB is more than 7 days apart', async () => {
       const t = await setupTestCases(setup)
 
       await expect(
         compareForBirthDuplication(
           {
-            childFirstNames: ['John', 'Janet'],
+            childFirstNames: ['John', 'John'],
             childFamilyName: ['Smith', 'Smith'],
-            childDoB: ['2011-11-11', '2011-12-01'],
+            childDoB: ['2011-11-11', '2011-11-19'], // 8 days apart (outside ±7 day limit)
             motherFirstNames: ['Mother', 'Mother'],
             motherFamilyName: ['Smith', 'Smith'],
             motherDoB: ['2000-11-12', '2000-11-12'],
@@ -167,18 +182,57 @@ describe('deduplication tests', () => {
           },
           t.elasticClient
         )
-      ).resolves.toHaveLength(1)
+      ).resolves.toHaveLength(0)
     })
 
-    it('finds no duplicate with the same mother details if two births more than 9 months apart', async () => {
+    it('finds a duplicate at the boundary of 7 days', async () => {
       const t = await setupTestCases(setup)
 
       await expect(
         compareForBirthDuplication(
           {
-            childFirstNames: ['John', 'Janet'],
+            childFirstNames: ['John', 'John'],
             childFamilyName: ['Smith', 'Smith'],
-            childDoB: ['2011-11-11', '2012-10-01'],
+            childDoB: ['2011-11-11', '2011-11-18'], // Exactly 7 days apart
+            motherFirstNames: ['Mother', 'Mother'],
+            motherFamilyName: ['Smith', 'Smith'],
+            motherDoB: ['2000-11-12', '2000-11-12']
+          },
+          t.elasticClient
+        )
+      ).resolves.toHaveLength(1)
+    })
+  })
+
+  describe('same mother two births within 9 months of each other', () => {
+    it('finds no duplicate when child names differ even within 7 days', async () => {
+      const t = await setupTestCases(setup)
+
+      await expect(
+        compareForBirthDuplication(
+          {
+            childFirstNames: ['John', 'Janet'], // Different child names
+            childFamilyName: ['Smith', 'Smith'],
+            childDoB: ['2011-11-11', '2011-11-13'], // Within 7 days
+            motherFirstNames: ['Mother', 'Mother'],
+            motherFamilyName: ['Smith', 'Smith'],
+            motherDoB: ['2000-11-12', '2000-11-12'],
+            motherIdentifier: ['23412387', '23412387']
+          },
+          t.elasticClient
+        )
+      ).resolves.toHaveLength(0)
+    })
+
+    it('finds no duplicate when child names differ and births are more than 7 days apart', async () => {
+      const t = await setupTestCases(setup)
+
+      await expect(
+        compareForBirthDuplication(
+          {
+            childFirstNames: ['John', 'Janet'], // Different child names
+            childFamilyName: ['Smith', 'Smith'],
+            childDoB: ['2011-11-11', '2011-11-20'], // 9 days apart (outside limit)
             motherFirstNames: ['Mother', 'Mother'],
             motherFamilyName: ['Smith', 'Smith'],
             motherDoB: ['2000-11-12', '2000-11-12'],
@@ -191,14 +245,14 @@ describe('deduplication tests', () => {
   })
 
   describe('child age increase/decrease', () => {
-    it('performs a duplicate check child increase and decrease. finds a duplicate for fraudulent records', async () => {
+    it('finds no duplicate when child DOB is years apart (fraudulent records should not match)', async () => {
       const t = await setupTestCases(setup)
       await expect(
         compareForBirthDuplication(
           {
             childFirstNames: ['John', 'John'],
             childFamilyName: ['Smith', 'Smith'],
-            childDoB: ['2011-11-11', '2014-11-01'],
+            childDoB: ['2011-11-11', '2014-11-01'], // 3 years apart (way outside ±7 day limit)
             motherFirstNames: ['Mother', 'Mother'],
             motherFamilyName: ['Smith', 'Smith'],
             motherDoB: ['2000-11-12', '2000-11-12'],
@@ -206,7 +260,81 @@ describe('deduplication tests', () => {
           },
           t.elasticClient
         )
+      ).resolves.toHaveLength(0) // Changed from 1 to 0 - new stricter rules
+    })
+  })
+
+  describe('edge cases for new stricter rules', () => {
+    it('finds duplicate when only mother first name matches (not family name)', async () => {
+      const t = await setupTestCases(setup)
+
+      await expect(
+        compareForBirthDuplication(
+          {
+            childFirstNames: ['John', 'John'],
+            childFamilyName: ['Smith', 'Smith'],
+            childDoB: ['2011-11-11', '2011-11-13'],
+            motherFirstNames: ['Mother', 'Mother'], // First name matches
+            motherFamilyName: ['Smith', 'Wilson'], // Family name differs
+            motherDoB: ['2000-11-12', '2000-11-12']
+          },
+          t.elasticClient
+        )
       ).resolves.toHaveLength(1)
+    })
+
+    it('finds duplicate when only mother family name matches (not first name)', async () => {
+      const t = await setupTestCases(setup)
+
+      await expect(
+        compareForBirthDuplication(
+          {
+            childFirstNames: ['John', 'John'],
+            childFamilyName: ['Smith', 'Smith'],
+            childDoB: ['2011-11-11', '2011-11-13'],
+            motherFirstNames: ['Mother', 'Harriet'], // First name differs
+            motherFamilyName: ['Smith', 'Smith'], // Family name matches
+            motherDoB: ['2000-11-12', '2000-11-12']
+          },
+          t.elasticClient
+        )
+      ).resolves.toHaveLength(1)
+    })
+
+    it('finds no duplicate when neither child name matches', async () => {
+      const t = await setupTestCases(setup)
+
+      await expect(
+        compareForBirthDuplication(
+          {
+            childFirstNames: ['John', 'Mathew'], // Different
+            childFamilyName: ['Smith', 'Wilson'], // Different
+            childDoB: ['2011-11-11', '2011-11-13'],
+            motherFirstNames: ['Mother', 'Mother'],
+            motherFamilyName: ['Smith', 'Smith'],
+            motherDoB: ['2000-11-12', '2000-11-12']
+          },
+          t.elasticClient
+        )
+      ).resolves.toHaveLength(0)
+    })
+
+    it('finds no duplicate when neither mother name matches', async () => {
+      const t = await setupTestCases(setup)
+
+      await expect(
+        compareForBirthDuplication(
+          {
+            childFirstNames: ['John', 'John'],
+            childFamilyName: ['Smith', 'Smith'],
+            childDoB: ['2011-11-11', '2011-11-13'],
+            motherFirstNames: ['Mother', 'Harriet'], // Different
+            motherFamilyName: ['Smith', 'Wilson'], // Different
+            motherDoB: ['2000-11-12', '2000-11-12']
+          },
+          t.elasticClient
+        )
+      ).resolves.toHaveLength(0)
     })
   })
 
