@@ -544,6 +544,7 @@ const mapStateToProps = (
       disabled: opt.value === 'PRINT_IN_ADVANCE' && isDifferentOffice
     }))
   }
+
   const fields = replaceInitialValues(
     formGroup.fields,
     (declaration &&
