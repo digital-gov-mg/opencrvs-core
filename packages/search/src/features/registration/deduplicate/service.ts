@@ -18,14 +18,7 @@ import { get } from 'lodash'
 import { ISearchResponse } from '@search/elasticsearch/client'
 import { OPENCRVS_INDEX_NAME } from '@search/constants'
 import { logger } from '@opencrvs/commons'
-import {
-  subYears,
-  addYears,
-  subMonths,
-  addMonths,
-  subDays,
-  addDays
-} from 'date-fns'
+import { subDays, addDays } from 'date-fns'
 import * as elasticsearch from '@elastic/elasticsearch'
 
 const isNonEmptyCondition = <T>(
@@ -73,135 +66,123 @@ export const searchForBirthDuplicates = async (
   // Names of length of >7 characters = 2 edits allowed
   const FIRST_NAME_FUZZINESS = 'AUTO:4,7'
 
-  if (
-    (!body.childFirstNames && !body.childFamilyName) ||
-    (!body.motherFirstNames && !body.motherFamilyName) ||
-    !body.motherDoB ||
-    !body.childDoB
-  ) {
+  // Early return if essential fields are missing
+  // Need at least one child name AND one mother name AND child DOB
+  const hasChildName = body.childFirstNames || body.childFamilyName
+  const hasMotherName = body.motherFirstNames || body.motherFamilyName
+
+  if (!hasChildName || !hasMotherName || !body.childDoB) {
     return []
   }
 
-  const mothersDetailsMatch = {
-    bool: {
-      must: [
-        // If mother identifier is provided, it needs to match 100%
-        body.motherIdentifier && {
-          match_phrase: {
-            motherIdentifier: body.motherIdentifier
-          }
-        },
-        body.motherFirstNames && {
-          match: {
-            motherFirstNames: {
-              query: body.motherFirstNames,
-              fuzziness: FIRST_NAME_FUZZINESS
-            }
-          }
-        },
-        body.motherFamilyName && {
-          match: {
-            motherFamilyName: {
-              query: body.motherFamilyName,
-              fuzziness: FIRST_NAME_FUZZINESS,
-              minimum_should_match: '100%'
-            }
-          }
-        },
-        body.motherDoB && {
-          range: {
-            motherDoB: {
-              gte: subYears(new Date(body.motherDoB), 1).toISOString(),
-              lte: addYears(new Date(body.motherDoB), 1).toISOString()
-            }
-          }
-        },
-        body.motherDoB && {
-          distance_feature: {
-            field: 'motherDoB',
-            pivot: '365d',
-            origin: new Date(body.motherDoB).toISOString(),
-            boost: 1.5
-          }
+  // MUST clauses: All required for a duplicate match
+  const mustClauses: Array<Record<string, unknown>> = []
+
+  // Child name match: At least ONE of (first OR family) must match
+  const childNameShouldClauses: Array<Record<string, unknown>> = []
+
+  if (body.childFirstNames) {
+    childNameShouldClauses.push({
+      match: {
+        childFirstNames: {
+          query: body.childFirstNames,
+          fuzziness: FIRST_NAME_FUZZINESS
         }
-      ].filter(isNonEmptyCondition)
-    }
+      }
+    })
   }
 
-  const birthWithin9Months = {
-    bool: {
-      must: [
-        body.childDoB && {
-          range: {
-            childDoB: {
-              gte: subMonths(new Date(body.childDoB), 9).toISOString(),
-              lte: addMonths(new Date(body.childDoB), 9).toISOString()
-            }
-          }
-        },
-        body.childDoB && {
-          distance_feature: {
-            field: 'childDoB',
-            pivot: '273d', // 9 months in days
-            origin: new Date(body.childDoB).toISOString(),
-            boost: 1
-          }
+  if (body.childFamilyName) {
+    childNameShouldClauses.push({
+      match: {
+        childFamilyName: {
+          query: body.childFamilyName,
+          fuzziness: FIRST_NAME_FUZZINESS
         }
-      ].filter(isNonEmptyCondition)
-    }
+      }
+    })
   }
 
-  const childsNameMatch = {
-    bool: {
-      must: [
-        body.childFirstNames && {
-          match: {
-            childFirstNames: {
-              query: body.childFirstNames,
-              fuzziness: FIRST_NAME_FUZZINESS
-            }
-          }
-        },
-        body.childFamilyName && {
-          match: {
-            childFamilyName: {
-              query: body.childFamilyName,
-              fuzziness: FIRST_NAME_FUZZINESS,
-              minimum_should_match: '100%'
-            }
-          }
-        }
-      ].filter(isNonEmptyCondition)
-    }
+  if (childNameShouldClauses.length > 0) {
+    mustClauses.push({
+      bool: {
+        should: childNameShouldClauses,
+        minimum_should_match: 1
+      }
+    })
   }
 
-  const childsBirthWithinRange = body.childDoB && {
-    bool: {
-      should: [
-        {
-          bool: {
-            must: [
-              {
-                range: {
-                  childDoB: {
-                    gte: subYears(new Date(body.childDoB), 3).toISOString(),
-                    lte: addYears(new Date(body.childDoB), 3).toISOString()
-                  }
-                }
-              },
-              {
-                distance_feature: {
-                  field: 'childDoB',
-                  pivot: '365d',
-                  origin: new Date(body.childDoB).toISOString(),
-                  boost: 1
-                }
-              }
-            ]
-          }
+  // Mother name match: At least ONE of (first OR family) must match
+  const motherNameShouldClauses: Array<Record<string, unknown>> = []
+
+  if (body.motherFirstNames) {
+    motherNameShouldClauses.push({
+      match: {
+        motherFirstNames: {
+          query: body.motherFirstNames,
+          fuzziness: FIRST_NAME_FUZZINESS
         }
-      ]
+      }
+    })
+  }
+
+  if (body.motherFamilyName) {
+    motherNameShouldClauses.push({
+      match: {
+        motherFamilyName: {
+          query: body.motherFamilyName,
+          fuzziness: FIRST_NAME_FUZZINESS
+        }
+      }
+    })
+  }
+
+  if (motherNameShouldClauses.length > 0) {
+    mustClauses.push({
+      bool: {
+        should: motherNameShouldClauses,
+        minimum_should_match: 1
+      }
+    })
+  }
+
+  // Child DOB: Within ±7 days (strict range)
+  const childDoBDate = new Date(body.childDoB)
+  mustClauses.push({
+    range: {
+      childDoB: {
+        gte: subDays(childDoBDate, 7).toISOString(),
+        lte: addDays(childDoBDate, 7).toISOString()
+      }
     }
+  })
+
+  // SHOULD clauses: Boost confidence but not required
+  const shouldClauses: Array<Record<string, unknown>> = []
+
+  // Mother identifier: Exact match if present (high boost)
+  if (body.motherIdentifier) {
+    shouldClauses.push({
+      term: {
+        motherIdentifier: {
+          value: body.motherIdentifier,
+          boost: 2.0
+        }
+      }
+    })
+  }
+
+  // Mother DOB: Within ±30 days (optional boost)
+  if (body.motherDoB) {
+    const motherDoBDate = new Date(body.motherDoB)
+    shouldClauses.push({
+      range: {
+        motherDoB: {
+          gte: subDays(motherDoBDate, 30).toISOString(),
+          lte: addDays(motherDoBDate, 30).toISOString()
+        }
+      }
+    })
   }
 
   try {
@@ -210,24 +191,12 @@ export const searchForBirthDuplicates = async (
         index: OPENCRVS_INDEX_NAME,
         query: {
           bool: {
-            should: [
-              {
-                bool: {
-                  must: [mothersDetailsMatch, birthWithin9Months]
-                }
-              },
-              {
-                bool: {
-                  must: [
-                    childsNameMatch,
-                    childsBirthWithinRange,
-                    mothersDetailsMatch
-                  ].filter(isNonEmptyCondition)
-                }
-              }
-            ]
+            must: mustClauses,
+            should: shouldClauses.length > 0 ? shouldClauses : undefined,
+            minimum_should_match: 0
           }
-        }
+        },
+        min_score: 3.0
       },
       {
         meta: true

@@ -8,14 +8,24 @@
 # Copyright (C) The OpenCRVS Authors located at https://github.com/opencrvs/opencrvs-core/blob/master/AUTHORS.
 set -e
 
-sed -e s~{{COUNTRY_CONFIG_URL_INTERNAL}}~$COUNTRY_CONFIG_URL_INTERNAL~g \
-    -e s~{{GATEWAY_URL_INTERNAL}}~$GATEWAY_URL_INTERNAL~g \
-    -e s~{{CONTENT_SECURITY_POLICY_WILDCARD}}~$CONTENT_SECURITY_POLICY_WILDCARD~g \
+escape_sed() {
+  printf '%s\n' "$1" | sed 's/[\/&~]/\\&/g'
+}
+
+ESC_COUNTRY=$(escape_sed "$COUNTRY_CONFIG_URL_INTERNAL")
+ESC_GATEWAY=$(escape_sed "$GATEWAY_URL_INTERNAL")
+ESC_CSP=$(escape_sed "$CONTENT_SECURITY_POLICY_WILDCARD")
+
+sed -e "s~{{COUNTRY_CONFIG_URL_INTERNAL}}~$ESC_COUNTRY~g" \
+    -e "s~{{GATEWAY_URL_INTERNAL}}~$ESC_GATEWAY~g" \
+    -e "s~{{CONTENT_SECURITY_POLICY_WILDCARD}}~$ESC_CSP~g" \
     /etc/nginx/conf.d/default.conf > /tmp/default.conf
+
 cat /tmp/default.conf > /etc/nginx/conf.d/default.conf
 
-sed -e s~{{COUNTRY_CONFIG_URL_INTERNAL}}~$COUNTRY_CONFIG_URL_INTERNAL~g \
-    -e s~{{GATEWAY_URL_INTERNAL}}~$GATEWAY_URL_INTERNAL~g \
+# Repeat for index.html
+sed -e "s~{{COUNTRY_CONFIG_URL_INTERNAL}}~$ESC_COUNTRY~g" \
+    -e "s~{{GATEWAY_URL_INTERNAL}}~$ESC_GATEWAY~g" \
     /usr/share/nginx/html/index.html > /tmp/index.html
-cat /tmp/index.html > /usr/share/nginx/html/index.html
 
+cat /tmp/index.html > /usr/share/nginx/html/index.html

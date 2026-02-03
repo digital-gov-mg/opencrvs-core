@@ -1,5 +1,5 @@
-ARG  BRANCH=develop
-FROM ghcr.io/opencrvs/ocrvs-base:${BRANCH}
+ARG  VERSION=dev
+FROM siecm/ocrvs-core:${VERSION}
 
 USER node
 WORKDIR /app/packages/auth

@@ -56,13 +56,13 @@ import { StyledErrorBoundary } from './components/StyledErrorBoundary'
 import { I18nContainer } from './i18n/components/I18nContainer'
 import { useApolloClient } from './utils/apolloClient'
 import { ApolloProvider } from './utils/ApolloProvider'
-
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client'
 import { AppStore } from './store'
 import { routesConfig as v2RoutesConfig } from './v2-events/routes/config'
 import { CorrectionForm, CorrectionReviewForm } from './views/CorrectionForm'
 import { VerifyCorrector } from './views/CorrectionForm/VerifyCorrector'
 import { ReloadModal } from './views/Modals/ReloadModal'
+import { useAdvancedFrontendCustomizations } from './hooks/useAdvancedFrontendCustomizations'
 import { ReviewCertificate } from './views/PrintCertificate/ReviewCertificateAction'
 import { PrintRecord } from './views/PrintRecord/PrintRecord'
 import { RecordAudit } from './views/RecordAudit/RecordAudit'
@@ -457,6 +457,12 @@ interface IAppProps {
 export function App({ client, store, router }: IAppProps) {
   const { client: apolloClient } = useApolloClient(store)
 
+  /** Global load frontend customizations */
+  const AdvancedCustomizationsComponent = () => {
+    useAdvancedFrontendCustomizations()
+    return null
+  }
+
   return (
     <ErrorBoundary>
       <GlobalStyle />
@@ -464,6 +470,7 @@ export function App({ client, store, router }: IAppProps) {
         <Provider store={store}>
           <I18nContainer>
             <ThemeProvider theme={getTheme()}>
+              <AdvancedCustomizationsComponent />
               <StyledErrorBoundary>
                 <RouterProvider
                   router={router}

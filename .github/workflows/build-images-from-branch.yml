@@ -105,7 +105,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: siecm
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PUBLISH_TOKEN }}
       - name: Build and push base image
@@ -118,9 +118,9 @@ jobs:
             push: true
             context: .
             tags: |
-              ghcr.io/opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.version }}${{ steps.arch_label.outputs.arch }}
-              ghcr.io/opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}${{ steps.arch_label.outputs.arch }}
-            cache-from: type=registry,ref=ghcr.io/opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}${{ steps.arch_label.outputs.arch }}
+              siecm/opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.version }}${{ steps.arch_label.outputs.arch }}
+              siecm/opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}${{ steps.arch_label.outputs.arch }}
+            cache-from: type=registry,ref=siecm/opencrvs/ocrvs-base:${{ steps.set-version-and-branch.outputs.branch }}${{ steps.arch_label.outputs.arch }}
             cache-to: type=inline
 
     outputs:
@@ -135,32 +135,32 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: siecm
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PUBLISH_TOKEN }}
       - name: Create and push multi-arch manifest
         env:
           BUILD_ARM: ${{ inputs.build_arm == true }}
         run: |
-          REPO="ghcr.io/opencrvs/ocrvs-base"
+          REPO="siecm/opencrvs/ocrvs-base"
           for TAG in ${{ needs.base.outputs.branch }} ${{ needs.base.outputs.version }}; do
             if [[ "$BUILD_ARM" == "true" ]]; then
               MANIFEST_LIST="$REPO:$TAG-amd64 $REPO:$TAG-arm64"
             else
               MANIFEST_LIST="$REPO:$TAG-amd64"
             fi
-            echo "[🔁 pushing ] ghcr.io/opencrvs/ocrvs-base:$TAG"
-            docker manifest create ghcr.io/opencrvs/ocrvs-base:$TAG $MANIFEST_LIST
-            docker manifest push ghcr.io/opencrvs/ocrvs-base:$TAG
+            echo "[🔁 pushing ] siecm/opencrvs/ocrvs-base:$TAG"
+            docker manifest create siecm/opencrvs/ocrvs-base:$TAG $MANIFEST_LIST
+            docker manifest push siecm/opencrvs/ocrvs-base:$TAG
           done
   build:
     needs: [base, merge-manifest]
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ 
-          (inputs.build_arm == true && fromJSON('["ubuntu-24.04", "ubuntu-24.04-arm"]')) || 
-          fromJSON('["ubuntu-24.04"]') 
+        runner: ${{
+          (inputs.build_arm == true && fromJSON('["ubuntu-24.04", "ubuntu-24.04-arm"]')) ||
+          fromJSON('["ubuntu-24.04"]')
           }}
         service: ${{ fromJSON(needs.base.outputs.services) }}
     runs-on: ${{ matrix.runner }}
@@ -178,7 +178,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: siecm
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PUBLISH_TOKEN }}
 
@@ -204,9 +204,9 @@ jobs:
             push: true
             context: .
             tags: |
-              ghcr.io/opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}${{ steps.arch_label.outputs.arch }}
-              ghcr.io/opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}${{ steps.arch_label.outputs.arch }}
-            cache-from: type=registry,ref=ghcr.io/opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}${{ steps.arch_label.outputs.arch }}
+              siecm/opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}${{ steps.arch_label.outputs.arch }}
+              siecm/opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}${{ steps.arch_label.outputs.arch }}
+            cache-from: type=registry,ref=siecm/opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.branch }}${{ steps.arch_label.outputs.arch }}
             cache-to: type=inline
 
   merge-services-manifest:
@@ -221,7 +221,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: siecm/
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PUBLISH_TOKEN }}
 
@@ -229,7 +229,7 @@ jobs:
         env:
           BUILD_ARM: ${{ inputs.build_arm == true }}
         run: |
-          REPO_PREFIX="ghcr.io/opencrvs/ocrvs"
+          REPO_PREFIX="siecm/opencrvs/ocrvs"
 
           for TAG in ${{ needs.base.outputs.branch }} ${{ needs.base.outputs.version }}; do
             # Create manifest list based on whether ARM build exists
@@ -261,7 +261,7 @@ jobs:
       - name: Gather Trivy output from base branch image
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: 'ghcr.io/opencrvs/ocrvs-${{ matrix.service }}:${{ github.event.pull_request.base.ref }}'
+          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ github.event.pull_request.base.ref }}'
           trivy-config: trivy.yaml
           format: 'sarif'
           output: './trivy-results-base.sarif'
@@ -269,7 +269,7 @@ jobs:
       - name: Gather Trivy output from newly build image
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: 'ghcr.io/opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
+          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
           trivy-config: trivy.yaml
           format: 'sarif'
           output: './trivy-results-branch.sarif'
@@ -300,5 +300,5 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: 'ghcr.io/opencrvs/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
+          image-ref: 'siecm/ocrvs-${{ matrix.service }}:${{ needs.base.outputs.version }}'
           trivy-config: trivy.yaml

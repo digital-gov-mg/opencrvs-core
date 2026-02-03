@@ -1,5 +1,5 @@
-ARG  BRANCH=develop
-FROM ghcr.io/opencrvs/ocrvs-base:${BRANCH}
+ARG  VERSION=dev
+FROM siecm/ocrvs-core:${VERSION}
 
 USER root
 # Install envsubst and clean up apt cache

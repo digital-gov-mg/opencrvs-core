@@ -22,10 +22,16 @@ async function getItem(key: string): Promise<string> {
 }
 
 async function setItem(key: string, value: string) {
+  /** dispatch a window event to be able to listen to the storage change */
+  const event = new CustomEvent('storageitemchange', { detail: { key } });
+  window.dispatchEvent(event);
   return await localForage.setItem(key, value)
 }
 
 async function removeItem(key: string) {
+  /** dispatch a window event to be able to listen to the storage change */
+  const event = new CustomEvent('storageitemremove', { detail: { key } });
+  window.dispatchEvent(event);
   return await localForage.removeItem(key)
 }
 
