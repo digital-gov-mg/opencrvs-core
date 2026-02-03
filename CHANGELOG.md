@@ -1,6 +1,155 @@
 # Changelog
 
-## [1.9.1](https://github.com/opencrvs/opencrvs-core/compare/v1.9.0...v1.9.1)
+## 1.9.6
+
+### New features
+
+- NUMBER_WITH_UNIT Input, which is a number input with a configurable selectable unit of measurement.
+- `now()` magic function, which can be used as a dynamic `defaultValue` for DATE and TIME inputs and resolves to the current date/time at runtime.
+- The document upload and preview feature now supports PDF files in addition to image formats (JPEG, PNG, JPG), allowing PDFs to be viewed alongside existing DECLARED and REGISTERED documents.
+
+## 1.9.5
+
+### New features
+
+- Introduced new configuration option `maxImageSize` for `FILE` and `FILE_WITH_OPTIONS` type of form fields to limit the maximum size of uploaded images. If the uploaded image exceeds provide size in pixels, a crop and resize tool will be shown to the user to adjust the image before uploading. [#10324](https://github.com/opencrvs/opencrvs-core/issues/10324)
+
+Usage example:
+
+A file field that allows uploading an image with maximum size of 600x600 pixels:
+
+```ts
+{
+  id: 'applicant.image',
+  type: 'FILE', // or 'FILE_WITH_OPTIONS'
+  ...
+  configuration: {
+    maxImageSize: { targetSize: { height: 600, width: 600 } }
+  }
+}
+```
+
+Uploaded image files can now be rendered in certificate svg templates using the `$lookup` Handlebars helper. Below is an example of rendering the uploaded applicant image added in declaration form through a `FILE` field in a certificate template:
+
+```hbs
+<image
+  x='50'
+  y='100'
+  height='50'
+  width='50'
+  xlink:href='{{$lookup $declaration "applicant.image"}}'
+/>
+```
+
+Also for `FILE_WITH_OPTIONS` fields, the selected option can be accessed using the following syntax, you just need to provide the option value as the last part of the path:
+
+```hbs
+<image
+  x='50'
+  y='100'
+  height='50'
+  width='100'
+  xlink:href='{{$lookup $declaration "applicant.idImage.ID_FRONT"}}'
+/>
+```
+
+Annotation data from actions can also be accessed in a similar way using the `$action` or `$actions` helpers. For example, to access an uploaded image in the `PRINT_CERTIFICATE` action annotation data:
+
+```hbs
+<image
+  x='50'
+  y='100'
+  height='50'
+  width='100'
+  xlink:href='{{$lookup
+    ($action "PRINT_CERTIFICATE")
+    "annotation.collector.OTHER.signedAffidavit"
+  }}'
+/>
+```
+
+- Add registration number field to advanced search configuration so that documents can be searched by their `Registration Number`. [#10760](https://github.com/opencrvs/opencrvs-core/issues/10760)
+
+### Bug fixes
+
+- Fix quick search failing when configured with a large number of events and many searchable fields [#11397](https://github.com/opencrvs/opencrvs-core/issues/11397)
+
+- In quick search, when searching with a valid email address, the search is performed only against email fields [[#11199](https://github.com/opencrvs/opencrvs-core/issues/11199)]
+
+### Improvements
+
+#### User default values in form fields
+
+Form fields now support typed user(...) references as default values, replacing legacy string-based $user.\* template variables.
+
+TEXT fields can use the following user references as default values:
+
+- user('name')
+- user('fullHonorificName')
+- user('device')
+- user('firstname')
+- user('middlename')
+- user('surname')
+- user('role')
+
+NAME fields now support user-based default values by assigning user references per name part. The recommended approach is:
+
+```ts
+defaultValue: {
+  firstname: user('firstname'),
+  middlename: user('middlename'), // optional
+  surname: user('surname')
+}
+```
+
+Using user('name') as a default value is only supported for FieldType.TEXT.
+It represents the user’s full name and should not be used with FieldType.NAME, since full names may contain multiple words and cannot be reliably split into individual name parts.
+
+Legacy string-based user template variables (e.g. $user.name) are now deprecated in favour of user(...) references.
+
+## 1.9.4
+
+### Bug fixes
+
+- e-Signet authentication now populates print and correction forms. An issue with FieldConfig `parent` parameter not finding action annotation field references was fixed. [#11210](https://github.com/opencrvs/opencrvs-core/issues/11210)
+
+## 1.9.3
+
+### New features
+
+- Introduced form page level config - `requireCompletionToContinue` to enforce full completion of the form page before moving to the next page.
+
+### Improvements
+
+- Add support for validating dates before/after another date field using `isBefore` and `isAfter` validators. [#11194](https://github.com/opencrvs/opencrvs-core/issues/11194)
+
+Usage example:
+
+```ts
+// 6570 days before another field
+field('mother.dob').isBefore().days(6570).fromDate(field('child.dob'))
+
+// 6570 days after another field
+field('mother.dateOfMarriage')
+  .isAfter()
+  .days(6570)
+  .fromDate(field('mother.dob'))
+
+// 45 days before now
+field('child.dob').isBefore().days(45).fromNow()
+```
+
+### Bug fixes
+
+- Fixes an issue where `event.hasAction` was not working in form configurations [#11074](https://github.com/opencrvs/opencrvs-core/issues/11074)
+
+## 1.9.2
+
+### New features
+
+- Toolkit now exports `window().location.get` to country config that can be used as a template variable e.g. in HttpField request body.
+
+## 1.9.1
 
 ### Breaking changes
 
@@ -491,6 +640,17 @@ To see Events V2 in action, check out the example configurations in the **countr
 - Fix the informant column on the Perfomance page showing "Other family member" when `Someone else` is selected for a registration [#6157](https://github.com/opencrvs/opencrvs-core/issues/6157)
 - Fix the event name displayed in email templates for death correction requests [#7703](https://github.com/opencrvs/opencrvs-core/issues/7703)
 - Fix the "email all users" feature by setting the _To_ email to the logged user's email [#8343](https://github.com/opencrvs/opencrvs-core/issues/8343)
+
+## [1.6.5](https://github.com/opencrvs/opencrvs-core/compare/v1.6.4...v1.6.5)
+
+### Bug fixes
+
+- Reconfigured Content Security Policy (CSP) to be more restrictive, enhancing protection against unauthorized content sources [#9594](https://github.com/opencrvs/opencrvs-core/issues/9584)
+- Ensure that place of birth/death only shows active facilities/offices on the form [#9311](https://github.com/opencrvs/opencrvs-core/issues/9311)
+
+### Breaking changes
+
+- Limit year past record `LIMIT_YEAR_PAST_RECORDS` forcing date of birth to start from the year 1900 has been addressed [#9326](https://github.com/opencrvs/opencrvs-core/pull/9326)
 
 ## [1.6.4](https://github.com/opencrvs/opencrvs-core/compare/v1.6.3...v1.6.4)
 

@@ -19,7 +19,15 @@ export function useSystemVariables() {
   const user = useUserDetails()
 
   const variables = {
-    $user: user
+    user,
+    $window: {
+      location: {
+        href: window.location.href,
+        pathname: window.location.pathname,
+        hostname: window.location.hostname,
+        originPathname: window.location.origin + window.location.pathname
+      }
+    }
   } satisfies SystemVariables
 
   return variables
