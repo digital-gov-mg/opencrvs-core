@@ -229,6 +229,7 @@ paths:
                                         - ADDRESS
                                         - TEXT
                                         - NUMBER
+                                        - NUMBER_WITH_UNIT
                                         - TEXTAREA
                                         - EMAIL
                                         - DATE
@@ -481,6 +482,7 @@ paths:
                                         - ADDRESS
                                         - TEXT
                                         - NUMBER
+                                        - NUMBER_WITH_UNIT
                                         - TEXTAREA
                                         - EMAIL
                                         - DATE
@@ -687,6 +689,7 @@ paths:
                                         - event.status
                                         - event.legalStatuses.REGISTERED.acceptedAt
                                         - event.legalStatuses.REGISTERED.createdAtLocation
+                                        - event.legalStatuses.REGISTERED.registrationNumber
                                         - event.updatedAt
                                     fieldType:
                                       type: string
@@ -752,7 +755,7 @@ paths:
                 - transactionId
                 - type
               default:
-                transactionId: d9397786-490a-4b26-9101-c6f44845f053
+                transactionId: 14a2fb20-ae2c-458e-9c52-c0fae3222bec
                 type: birth
       responses:
         "200":
@@ -838,7 +841,7 @@ paths:
                 - transactionId
               default:
                 eventId: <event-id-here>
-                transactionId: 3c0a1967-cf5b-41f9-8c52-df709294b663
+                transactionId: a8d98f51-bc57-4c5c-8db5-6431f0180552
                 declaration: {}
                 annotation: {}
                 type: NOTIFY
@@ -1153,13 +1156,13 @@ paths:
                 query:
                   allOf:
                     - $ref: "#/components/schemas/QueryType"
-                  default: &a13
+                  default: &a14
                     type: and
                     clauses:
                       - eventType: tennis-club-membership
                         status:
                           type: anyOf
-                          terms: &a14
+                          terms: &a15
                             - CREATED
                             - NOTIFIED
                             - DECLARED
@@ -1281,7 +1284,7 @@ paths:
                             description: Unique identifier of the transaction.
                           createdByUserType:
                             type: string
-                            enum: &a15
+                            enum: &a16
                               - user
                               - system
                             description: Indicates whether the action was created by a human-user or by a
@@ -1317,7 +1320,7 @@ paths:
                               rejected by a third-party integration.
                           type:
                             type: string
-                            enum: &a16
+                            enum: &a17
                               - NOTIFY
                               - DECLARE
                               - VALIDATE
@@ -1649,6 +1652,7 @@ components:
                             - ADDRESS
                             - TEXT
                             - NUMBER
+                            - NUMBER_WITH_UNIT
                             - TEXTAREA
                             - EMAIL
                             - DATE
@@ -1879,6 +1883,7 @@ components:
                             - ADDRESS
                             - TEXT
                             - NUMBER
+                            - NUMBER_WITH_UNIT
                             - TEXTAREA
                             - EMAIL
                             - DATE
@@ -2390,12 +2395,17 @@ components:
                       properties:
                         $userField:
                           type: string
-                          enum:
+                          enum: &a10
                             - id
                             - name
                             - role
-                            - signature
-                            - avatar
+                            - fullHonorificName
+                            - device
+                            - firstname
+                            - middlename
+                            - surname
+                            - district
+                            - province
                             - primaryOfficeId
                         $location:
                           type: string
@@ -2549,8 +2559,18 @@ components:
               enum:
                 - TEXT
             defaultValue:
-              type: string
-              minLength: 1
+              anyOf:
+                - type: string
+                  minLength: 1
+                - type: object
+                  properties:
+                    $userField:
+                      type: string
+                      enum: *a10
+                    $location:
+                      type: string
+                  required:
+                    - $userField
             configuration:
               type: object
               properties:
@@ -2732,6 +2752,191 @@ components:
             - label
             - type
           description: Number input
+        - type: object
+          properties:
+            id:
+              type: string
+              description: Unique identifier of the field.
+            label:
+              description: Human-readable label of the field.
+              allOf:
+                - $ref: "#/components/schemas/TranslationConfig"
+            parent:
+              anyOf:
+                - type: object
+                  properties:
+                    $$field:
+                      type: string
+                      description: Unique identifier for the field
+                    $$subfield:
+                      type: array
+                      items:
+                        type: string
+                      description: 'If the FieldValue is an object, subfield can be used to refer to
+                        e.g. `["foo", "bar"]` in `{ foo: { bar: 3 } }`'
+                  required:
+                    - $$field
+                  description: Reference to a field by its ID
+                - type: array
+                  items:
+                    type: object
+                    properties:
+                      $$field:
+                        type: string
+                        description: Unique identifier for the field
+                      $$subfield:
+                        type: array
+                        items:
+                          type: string
+                        description: 'If the FieldValue is an object, subfield can be used to refer to
+                          e.g. `["foo", "bar"]` in `{ foo: { bar: 3 } }`'
+                    required:
+                      - $$field
+                    description: Reference to a field by its ID
+              description: Reference to the parent field or fields. When a parent field
+                changes, this field is reset.
+            required:
+              anyOf:
+                - type: boolean
+                - type: object
+                  properties:
+                    message:
+                      description: Custom required validation message
+                      allOf:
+                        - $ref: "#/components/schemas/TranslationConfig"
+                  required:
+                    - message
+              default: false
+              description: Indicates whether the field is mandatory.
+            conditionals:
+              type: array
+              items:
+                $ref: "#/components/schemas/FieldConditional"
+              default: *a8
+              description: Conditions determining when the field is shown or enabled. By
+                default, the field is always shown and enabled.
+            secured:
+              type: boolean
+              default: false
+              description: Indicates whether the field is secured. Secured fields are not
+                indexed for search and are only visible when explicitly
+                assigned.
+            placeholder:
+              $ref: "#/components/schemas/TranslationConfig"
+            validation:
+              type: array
+              items:
+                type: object
+                properties:
+                  validator:
+                    $ref: "#/components/schemas/Conditional"
+                  message:
+                    $ref: "#/components/schemas/TranslationConfig"
+                required:
+                  - validator
+                  - message
+              default: *a9
+              description: Additional validation rules applied to the field.
+            helperText:
+              $ref: "#/components/schemas/TranslationConfig"
+            hideLabel:
+              type: boolean
+              default: false
+            uncorrectable:
+              type: boolean
+              default: false
+              description: Indicates whether the field can be modified during record
+                correction.
+            value:
+              anyOf:
+                - type: object
+                  properties:
+                    $$field:
+                      type: string
+                      description: Unique identifier for the field
+                    $$subfield:
+                      type: array
+                      items:
+                        type: string
+                      description: 'If the FieldValue is an object, subfield can be used to refer to
+                        e.g. `["foo", "bar"]` in `{ foo: { bar: 3 } }`'
+                  required:
+                    - $$field
+                  description: Reference to a field by its ID
+                - type: array
+                  items:
+                    type: object
+                    properties:
+                      $$field:
+                        type: string
+                        description: Unique identifier for the field
+                      $$subfield:
+                        type: array
+                        items:
+                          type: string
+                        description: 'If the FieldValue is an object, subfield can be used to refer to
+                          e.g. `["foo", "bar"]` in `{ foo: { bar: 3 } }`'
+                    required:
+                      - $$field
+                    description: Reference to a field by its ID
+              description: Reference to the source field or fields. When a value is defined,
+                it is copied from the parent field when changed. If multiple
+                references are provided, the first truthy value is used.
+            analytics:
+              type: boolean
+              default: false
+              description: Indicates whether the field is included in analytics. When enabled,
+                its value becomes available in the analytics dashboard.
+            type:
+              type: string
+              enum:
+                - NUMBER_WITH_UNIT
+            defaultValue:
+              type: object
+              properties:
+                numericValue:
+                  type: number
+                unit:
+                  type: string
+              required:
+                - numericValue
+                - unit
+            options:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: string
+                    description: The value of the option
+                  label:
+                    anyOf:
+                      - type: string
+                      - $ref: "#/components/schemas/TranslationConfig"
+                    description: The label of the option
+                required:
+                  - value
+                  - label
+              description: A list of options for the unit select
+            configuration:
+              type: object
+              properties:
+                min:
+                  type: number
+                  description: Minimum value of the number field
+                max:
+                  type: number
+                  description: Maximum value of the number field
+                numberFieldPlaceholder:
+                  description: Placeholder for the number field
+                  allOf:
+                    - $ref: "#/components/schemas/TranslationConfig"
+          required:
+            - id
+            - label
+            - type
+            - options
+          description: Number with unit input
         - type: object
           properties:
             id:
@@ -3209,8 +3414,7 @@ components:
                 - DATE
             defaultValue:
               type: string
-              format: date
-              description: Date in the format YYYY-MM-DD
+              description: Default date value(yyyy-MM-dd)
             configuration:
               type: object
               properties:
@@ -3363,8 +3567,8 @@ components:
               enum:
                 - TIME
             defaultValue:
-              type: string
-              pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+              type: object
+              description: Default time value (HH-mm)
             configuration:
               type: object
               properties:
@@ -3692,7 +3896,7 @@ components:
                 - SELECT_DATE_RANGE
             defaultValue:
               type: string
-              enum: &a10
+              enum: &a11
                 - last7Days
                 - last30Days
                 - last90Days
@@ -3704,7 +3908,7 @@ components:
                 properties:
                   value:
                     type: string
-                    enum: *a10
+                    enum: *a11
                     description: The value of the option
                   label:
                     description: The label of the option
@@ -3870,7 +4074,7 @@ components:
                   properties:
                     fontVariant:
                       type: string
-                      enum: &a11
+                      enum: &a12
                         - reg12
                         - reg14
                         - reg16
@@ -4219,7 +4423,7 @@ components:
                   properties:
                     fontVariant:
                       type: string
-                      enum: *a11
+                      enum: *a12
               default: {}
           required:
             - id
@@ -4706,14 +4910,44 @@ components:
               type: object
               properties:
                 firstname:
-                  type: string
-                  minLength: 1
+                  anyOf:
+                    - type: object
+                      properties:
+                        $userField:
+                          type: string
+                          enum: *a10
+                        $location:
+                          type: string
+                      required:
+                        - $userField
+                    - type: string
+                      minLength: 1
                 middlename:
-                  type: string
-                  minLength: 1
+                  anyOf:
+                    - type: object
+                      properties:
+                        $userField:
+                          type: string
+                          enum: *a10
+                        $location:
+                          type: string
+                      required:
+                        - $userField
+                    - type: string
+                      minLength: 1
                 surname:
-                  type: string
-                  minLength: 1
+                  anyOf:
+                    - type: object
+                      properties:
+                        $userField:
+                          type: string
+                          enum: *a10
+                        $location:
+                          type: string
+                      required:
+                        - $userField
+                    - type: string
+                      minLength: 1
             configuration:
               type: object
               properties:
@@ -5409,7 +5643,7 @@ components:
                   type: array
                   items:
                     type: string
-                    enum: &a12
+                    enum: &a13
                       - image/png
                       - image/jpg
                       - image/jpeg
@@ -5419,6 +5653,21 @@ components:
                       - application/vnd.openxmlformats-officedocument.wordprocessingml.document
                       - application/vnd.oasis.opendocument.text
                   description: List of allowed file formats for the signature
+                maxImageSize:
+                  type: object
+                  properties:
+                    targetSize:
+                      type: object
+                      properties:
+                        width:
+                          type: number
+                        height:
+                          type: number
+                      required:
+                        - width
+                        - height
+                  required:
+                    - targetSize
                 style:
                   type: object
                   properties:
@@ -6511,7 +6760,7 @@ components:
                   type: array
                   items:
                     type: string
-                    enum: *a12
+                    enum: *a13
                   description: List of allowed file formats for the signature
               required:
                 - maxFileSize
@@ -6862,11 +7111,26 @@ components:
                   type: number
                   description: Maximum file size in bytes
                   default: 5242880
+                maxImageSize:
+                  type: object
+                  properties:
+                    targetSize:
+                      type: object
+                      properties:
+                        width:
+                          type: number
+                        height:
+                          type: number
+                      required:
+                        - width
+                        - height
+                  required:
+                    - targetSize
                 acceptedFileTypes:
                   type: array
                   items:
                     type: string
-                    enum: *a12
+                    enum: *a13
                   description: List of allowed file formats for the signature
               required:
                 - maxFileSize
@@ -7925,7 +8189,7 @@ components:
                 - VERIFICATION_STATUS
             defaultValue:
               type: string
-              enum: &a18
+              enum: &a19
                 - verified
                 - authenticated
                 - failed
@@ -9060,7 +9324,7 @@ components:
                 query:
                   allOf:
                     - $ref: "#/components/schemas/QueryType"
-                  default: *a13
+                  default: *a14
                 limit:
                   type: number
                   default: 100
@@ -9193,7 +9457,7 @@ components:
             - eventType: tennis-club-membership
               status:
                 type: anyOf
-                terms: *a14
+                terms: *a15
               updatedAt:
                 type: range
                 gte: 2025-05-22
@@ -9262,7 +9526,7 @@ components:
           type: array
           items:
             type: string
-            enum: *a14
+            enum: *a15
       required:
         - type
         - terms
@@ -9275,7 +9539,7 @@ components:
             - exact
         term:
           type: string
-          enum: *a14
+          enum: *a15
       required:
         - type
         - term
@@ -9344,7 +9608,7 @@ components:
             - timePeriod
         term:
           type: string
-          enum: *a10
+          enum: *a11
       required:
         - type
         - term
@@ -9369,7 +9633,7 @@ components:
             - exact
         term:
           type: string
-          enum: *a15
+          enum: *a16
       required:
         - type
         - term
@@ -9819,6 +10083,11 @@ components:
           description: Header title of the page
           allOf:
             - $ref: "#/components/schemas/TranslationConfig"
+        requireCompletionToContinue:
+          type: boolean
+          default: false
+          description: If true, all required fields must be filled before continuing to
+            the next page
         fields:
           type: array
           items:
@@ -9832,6 +10101,7 @@ components:
       required:
         - id
         - title
+        - requireCompletionToContinue
         - fields
       description: Form page configuration
     VerificationActionConfig:
@@ -10074,7 +10344,7 @@ components:
                     description: Unique identifier of the transaction.
                   createdByUserType:
                     type: string
-                    enum: *a15
+                    enum: *a16
                     description: Indicates whether the action was created by a human-user or by a
                       system-user.
                   createdAt:
@@ -10108,7 +10378,7 @@ components:
                       rejected by a third-party integration.
                   type:
                     type: string
-                    enum: *a16
+                    enum: *a17
                 required:
                   - id
                   - transactionId
@@ -10180,7 +10450,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10214,7 +10484,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: &a17
+          enum: &a18
             - Requested
             - Accepted
             - Rejected
@@ -10252,7 +10522,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10286,7 +10556,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10321,7 +10591,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10355,7 +10625,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10400,7 +10670,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10434,7 +10704,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10488,7 +10758,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10522,7 +10792,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10557,7 +10827,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10591,7 +10861,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10634,7 +10904,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10668,7 +10938,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10713,7 +10983,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10747,7 +11017,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10782,7 +11052,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10816,7 +11086,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10855,7 +11125,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10889,7 +11159,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10924,7 +11194,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -10958,7 +11228,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -10997,7 +11267,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -11031,7 +11301,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -11066,7 +11336,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -11100,7 +11370,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -11138,7 +11408,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -11172,7 +11442,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -11220,7 +11490,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -11254,7 +11524,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -11289,7 +11559,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -11323,7 +11593,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -11364,7 +11634,7 @@ components:
           description: Unique identifier of the transaction.
         createdByUserType:
           type: string
-          enum: *a15
+          enum: *a16
           description: Indicates whether the action was created by a human-user or by a
             system-user.
         createdAt:
@@ -11398,7 +11668,7 @@ components:
           description: Action-specific metadata used to annotate the event.
         status:
           type: string
-          enum: *a17
+          enum: *a18
           description: Current status of the action. Actions may be validated
             asynchronously by third-party integrations.
         originalActionId:
@@ -11463,7 +11733,7 @@ components:
           description: The type of event, such as birth, death, or marriage.
         status:
           type: string
-          enum: *a14
+          enum: *a15
         legalStatuses:
           type: object
           properties:
@@ -11710,7 +11980,7 @@ components:
                     description: Date range with start and end dates in the format YYYY-MM-DD.
                       Inclusive start, exclusive end.
                   - type: string
-                    enum: *a10
+                    enum: *a11
                   - type: boolean
                   - type: number
                   - type: object
@@ -11791,7 +12061,7 @@ components:
                     required:
                       - loading
                   - type: string
-                    enum: *a18
+                    enum: *a19
                   - type: object
                     nullable: true
                     properties:
@@ -11807,6 +12077,21 @@ components:
                   - type: object
                     properties:
                       data: {}
+                  - type: object
+                    properties:
+                      numericValue:
+                        type: number
+                      unit:
+                        type: string
+                    required:
+                      - numericValue
+                      - unit
+                  - type: object
+                    properties:
+                      numericValue:
+                        type: number
+                      unit:
+                        type: string
               - type: object
                 nullable: true
                 properties:
@@ -11884,7 +12169,7 @@ components:
                           description: Date range with start and end dates in the format YYYY-MM-DD.
                             Inclusive start, exclusive end.
                         - type: string
-                          enum: *a10
+                          enum: *a11
                         - type: boolean
                         - type: number
                         - type: object
@@ -11965,7 +12250,7 @@ components:
                           required:
                             - loading
                         - type: string
-                          enum: *a18
+                          enum: *a19
                         - type: object
                           nullable: true
                           properties:
@@ -11981,6 +12266,21 @@ components:
                         - type: object
                           properties:
                             data: {}
+                        - type: object
+                          properties:
+                            numericValue:
+                              type: number
+                            unit:
+                              type: string
+                          required:
+                            - numericValue
+                            - unit
+                        - type: object
+                          properties:
+                            numericValue:
+                              type: number
+                            unit:
+                              type: string
                 required:
                   - data
           description: Aggregate representation of event data after all actions have been
