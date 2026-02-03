@@ -14,17 +14,48 @@
  * They are currently used for providing default values in FieldConfig.
  */
 
+import { UUID } from '../uuid'
 import { FieldValue } from './FieldValue'
 
 /**
  * Available system variables for configuration.
  */
 export type SystemVariables = {
-  $user: {
-    province: string
-    district: string
+  user: {
+    id: string
+    province?: string
+    district?: string
+    name?: string
+    role?: string
+    firstname?: string
+    middlename?: string
+    surname?: string
+    primaryOfficeId?: UUID
+    fullHonorificName?: string
+    device?: string
+    avatar?: string
+    signature?: string
+  }
+  $window: {
+    location: {
+      href: string
+      pathname: string
+      hostname: string
+      originPathname: string
+    }
   }
 }
+
+/**
+ * Resolves `window().location.get('href')` to `window.location.href` to allow us to 1) type check system variables 2) change the implementation later if needed
+ */
+export const window = () => ({
+  location: {
+    get: (key: 'href' | 'pathname' | 'hostname' | 'originPathname') => {
+      return `$window.location.${key}`
+    }
+  }
+})
 
 /**
  * Recursively flatten the keys of an object. Used to limit types when configuring default values in country config.

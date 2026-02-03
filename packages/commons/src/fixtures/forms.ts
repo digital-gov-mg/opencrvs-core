@@ -38,6 +38,7 @@ export const PRINT_CERTIFICATE_FORM = defineActionForm({
     {
       id: 'collector',
       type: PageTypes.enum.FORM,
+      requireCompletionToContinue: true,
       title: {
         id: 'event.tennis-club-membership.action.certificate.form.section.who.title',
         defaultMessage: 'Print certified copy',
@@ -648,6 +649,7 @@ export const PRINT_CERTIFICATE_FORM = defineActionForm({
     {
       id: 'collector.identity.verify',
       type: PageTypes.enum.VERIFICATION,
+      requireCompletionToContinue: true,
       conditional: field('collector.requesterId').isEqualTo('INFORMANT'),
       title: {
         id: 'event.tennis-club-membership.action.print.verifyIdentity',
@@ -1190,7 +1192,6 @@ export const TENNIS_CLUB_DECLARATION_FORM = defineDeclarationForm({
             id: 'event.tennis-club-membership.action.declare.form.section.recommender.field.none.label'
           }
         },
-
         {
           id: 'recommender.name',
           type: FieldType.NAME,

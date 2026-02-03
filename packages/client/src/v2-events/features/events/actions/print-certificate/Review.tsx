@@ -151,7 +151,6 @@ export function Review() {
 
   const { getAnnotation } = useActionAnnotation()
   const annotation = getAnnotation()
-  const validatorContext = useValidatorContext()
 
   if (!templateId) {
     throw new Error('Please select a template from the previous step')
@@ -163,8 +162,9 @@ export function Review() {
 
   const { getEvent, onlineActions } = useEvents()
   const fullEvent = getEvent.getFromCache(eventId)
-
+  const validatorContext = useValidatorContext(fullEvent)
   const actions = getAcceptedActions(fullEvent)
+
   const userIds = getUserIdsFromActions(actions, [SystemRole.enum.HEALTH])
 
   const { getUsers } = useUsers()
@@ -203,7 +203,7 @@ export function Review() {
     createdByRole: userFromUsersList.role,
     status: 'Accepted',
     declaration: {},
-    annotation: null,
+    annotation,
     originalActionId: null,
     createdBySignature: userFromUsersList.signature,
     createdAtLocation: userDetails.primaryOffice.id as UUID,
