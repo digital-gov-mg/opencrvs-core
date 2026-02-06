@@ -35,14 +35,7 @@ import { badRequest, Boom, isBoom } from '@hapi/boom'
 import { Context } from './graphql/context'
 import { RateLimitError } from './rate-limit'
 
-let publicCert: Buffer
-try {
-  console.log('Reading cert from:', CERT_PUBLIC_KEY_PATH)
-  publicCert = readFileSync(CERT_PUBLIC_KEY_PATH)
-} catch (err) {
-  console.error('FAILED TO READ CERT', err)
-  throw err
-}
+const publicCert = readFileSync(CERT_PUBLIC_KEY_PATH)
 
 export async function createServer() {
   let whitelist: string[] = [HOSTNAME]
