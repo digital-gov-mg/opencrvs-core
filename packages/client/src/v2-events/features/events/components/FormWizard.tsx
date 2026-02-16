@@ -26,6 +26,11 @@ export const messages = defineMessages({
     defaultMessage: 'Back to review',
     description: 'Back to review button text',
     id: 'buttons.backToReview'
+  },
+  continueButton: {
+    defaultMessage: 'Continue',
+    description: 'Continue Button Text',
+    id: 'buttons.continue'
   }
 })
 
@@ -77,7 +82,7 @@ export const FormWizard = ({
               type="primary"
               onClick={() => onNextPage()}
             >
-              {continueButtonText}
+              {intl.formatMessage(messages.continueButton)}
             </Button>
 
             {showReviewButton && (
