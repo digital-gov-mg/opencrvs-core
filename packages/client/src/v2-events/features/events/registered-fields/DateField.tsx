@@ -25,6 +25,7 @@ import {
 } from '@opencrvs/components/lib/DateField'
 import { useResolveDefaultValue } from '../useResolveDefaultValue'
 import { StringifierContext } from './RegisteredField'
+import { locales } from '@client/utils/date-formatting'
 
 const messages = defineMessages({
   dateFormat: {
@@ -115,9 +116,15 @@ function DateOutput({ value }: { value?: string }) {
   const parsed = DateValue.safeParse(value)
 
   if (parsed.success) {
+    // Extract language code (e.g., 'fr' from 'fr-FR' or 'fr')
+    const langCode = intl.locale.split('-')[0]
+    const locale = locales[langCode] || locales[intl.locale] || locales.en
     return format(
       new Date(parsed.data),
-      intl.formatMessage(messages.dateFormat)
+      intl.formatMessage(messages.dateFormat),
+      {
+        locale
+      }
     )
   }
 
