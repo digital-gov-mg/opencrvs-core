@@ -165,6 +165,19 @@ export async function createServer() {
 
     await database.start()
     await app.start()
+
+    const listener = app.listener
+
+    logger.info(
+      `Node timeouts: ${JSON.stringify({
+        requestTimeout: listener.requestTimeout,
+        headersTimeout: listener.headersTimeout,
+        keepAliveTimeout: listener.keepAliveTimeout,
+        timeout: listener.timeout
+      })}`
+    )
+
+    app.listener.requestTimeout = 11 * 60 * 1000
     app.log('info', `server started on port ${PORT}`)
   }
 
