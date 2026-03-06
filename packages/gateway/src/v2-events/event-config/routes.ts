@@ -8,6 +8,7 @@
  *
  * Copyright (C) The OpenCRVS Authors located at https://github.com/opencrvs/opencrvs-core/blob/master/AUTHORS.
  */
+import { DEFAULT_TIMEOUT } from '@gateway/constants'
 import { env } from '@gateway/environment'
 import { ServerRoute } from '@hapi/hapi'
 import { logger } from '@opencrvs/commons'
@@ -28,7 +29,8 @@ export const trpcProxy = [
     options: {
       payload: {
         output: 'data',
-        parse: false
+        parse: false,
+        timeout: DEFAULT_TIMEOUT
       }
     }
   }
