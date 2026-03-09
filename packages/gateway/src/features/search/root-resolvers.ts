@@ -158,31 +158,44 @@ export const resolvers: GQLResolver = {
       }
 
       if (isExternalAPI && system) {
+        let start = performance.now()
         const getTotalRequest = await getMetrics(
           '/advancedSearch',
           {},
           authHeader
         )
+        console.log('getMetrics took', performance.now() - start, 'ms')
+
         if (getTotalRequest.total >= system.settings.dailyQuota) {
           throw new RateLimitError('Daily search quota exceeded')
         }
 
+        start = performance.now()
         const searchResult: ApiResponse<ISearchResponse<any>> =
           await postAdvancedSearch(authHeader, searchCriteria)
+        console.log('postAdvancedSearch took', performance.now() - start, 'ms')
 
         if ((searchResult?.statusCode ?? 0) >= 400) {
           const errMsg = searchResult as Options<string>
           throw new Error(errMsg.message)
         }
 
+        start = performance.now()
         await Promise.all(
           (searchResult.body.hits.hits || []).map((hit) =>
             retrieveRecord(hit._id, authHeader)
           )
         )
+        console.log(
+          'retrieveRecord Promise.all took',
+          performance.now() - start,
+          'ms'
+        )
 
         if (searchResult.body.hits.total.value) {
+          start = performance.now()
           await postMetrics('/advancedSearch', {}, authHeader)
+          console.log('postMetrics took', performance.now() - start, 'ms')
         }
 
         return {
