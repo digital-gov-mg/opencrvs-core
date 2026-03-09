@@ -36,8 +36,12 @@ export async function setLocations(locations: Location[]) {
  */
 
 export async function syncLocations() {
+  const start = performance.now()
   const locations = await config.getLocations()
-  return setLocations(locations)
+  console.log('getLocations took', performance.now() - start, 'ms')
+  const result = await setLocations(locations)
+  console.log('setLocations took', performance.now() - start, 'ms')
+  return result
 }
 
 /**
