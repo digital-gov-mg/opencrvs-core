@@ -19,7 +19,7 @@ export const NATIVE_LANGUAGE = (() => {
   return languages.find((language) => language !== 'en')
 })()
 
-export const DEFAULT_TIMEOUT = 600000 * 3 // Increase to 30 minutes for migrations
+export const DEFAULT_TIMEOUT = 60000
 
 export const REDIS_HOST = env.REDIS_HOST
 export const REDIS_USERNAME = env.REDIS_USERNAME

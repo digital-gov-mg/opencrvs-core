@@ -23,14 +23,14 @@ export const trpcProxy = [
       return h.proxy({
         uri:
           new URL(req.params.path, env.EVENTS_URL).toString() + req.url.search,
-        passThrough: true
+        passThrough: true,
+        timeout: DEFAULT_TIMEOUT
       })
     },
     options: {
       payload: {
         output: 'data',
-        parse: false,
-        timeout: DEFAULT_TIMEOUT
+        parse: false
       }
     }
   }
