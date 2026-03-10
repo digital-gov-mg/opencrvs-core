@@ -15,7 +15,7 @@ import { TranslationConfig } from './TranslationConfig'
 import { FieldType } from './FieldType'
 import {
   CheckboxFieldValue,
-  DateValue,
+  PlainDate,
   NumberFieldValue,
   NonEmptyTextValue,
   TextValue,
@@ -66,6 +66,7 @@ export const FieldReference = z
     $$subfield: z
       .array(z.string())
       .optional()
+      .default([])
       .describe(
         'If the FieldValue is an object, subfield can be used to refer to e.g. `["foo", "bar"]` in `{ foo: { bar: 3 } }`'
       )
@@ -262,7 +263,7 @@ export type EmailField = z.infer<typeof EmailField>
 
 const DateField = BaseField.extend({
   type: z.literal(FieldType.DATE),
-  defaultValue: SerializedNowDateTime.or(DateValue)
+  defaultValue: SerializedNowDateTime.or(PlainDate)
     .optional()
     .openapi({ effectType: 'input', type: 'string' })
     .describe('Default date value(yyyy-MM-dd)'),
@@ -530,7 +531,14 @@ const NameField = BaseField.extend({
       order: z.array(z.enum(['firstname', 'middlename', 'surname'])).optional(),
       maxLength: z.number().optional().describe('Maximum length of the text'),
       prefix: TranslationConfig.optional(),
-      postfix: TranslationConfig.optional()
+      postfix: TranslationConfig.optional(),
+      showParentFieldError: z
+        .boolean()
+        .default(false)
+        .optional()
+        .describe(
+          `If true, shows the parent field error and hides the subfield error`
+        )
     })
     .default({
       name: {

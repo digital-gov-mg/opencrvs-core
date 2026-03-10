@@ -57,7 +57,7 @@ import {
 import { FieldType } from './FieldType'
 import {
   CheckboxFieldValue,
-  DateValue,
+  PlainDate,
   EmailValue,
   FieldValue,
   FieldUpdateValueSchema,
@@ -128,7 +128,7 @@ export function mapFieldTypeToZod(field: FieldConfig, actionType?: ActionType) {
 
   switch (field.type) {
     case FieldType.DATE:
-      schema = DateValue
+      schema = PlainDate
       break
     case FieldType.AGE:
       schema = AgeValue
@@ -181,7 +181,9 @@ export function mapFieldTypeToZod(field: FieldConfig, actionType?: ActionType) {
       schema = FileFieldValue
       break
     case FieldType.FILE_WITH_OPTIONS:
-      schema = FileFieldWithOptionValue
+      schema = field.required
+        ? FileFieldWithOptionValue.min(1)
+        : FileFieldWithOptionValue
       break
     case FieldType.ADDRESS:
       schema = getDynamicAddressFieldValue(field)

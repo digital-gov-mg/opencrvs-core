@@ -1,5 +1,103 @@
 # Changelog
 
+## 1.9.11
+
+### New features
+
+- Added support of `updatedByUserRole` for workqueue configuration.
+  Workqueues can now be filtered by a specific role or `user('role')`. [#11848](https://github.com/opencrvs/opencrvs-core/issues/11848)
+
+**Usage example**
+
+```ts
+query: {
+  updatedByUserRole: { type: 'exact', term: user('role') }
+}
+```
+
+### Bug fixes
+
+- Fix newly created drafts in offline mode are not accessible [#11820](https://github.com/opencrvs/opencrvs-core/issues/11820)
+- Fix the rendered date on the review page and the certificate display issue in negative UTC offset time zones. [#11955](https://github.com/opencrvs/opencrvs-core/issues/11955)
+
+### Improvements
+
+- Change reindex call to make operation non-destructive. Create endpoint to track progress of reindex. [#11877](https://github.com/opencrvs/opencrvs-core/issues/11877)
+
+- Explicitly nullify hidden field values to prevent stale data in database and fix incorrect search results [#11695](https://github.com/opencrvs/opencrvs-core/pull/11849)
+- Update accordion behavior on the review page so that only sections containing required or completed fields are expanded by default. [#10133](https://github.com/opencrvs/opencrvs-core/issues/10133)
+
+## 1.9.10
+
+### New features
+
+- Added support for `event()` helper to access event metadata in `dateOfEvent` and `summary` configuration in EventConfig. This allows for more dynamic and flexible configurations based on event metadata.
+
+Usage example:
+
+For `dateOfEvent` configuration, you can now reference an event metadata field like this:
+
+```ts
+dateOfEvent: event('legalStatuses.REGISTERED.acceptedAt')
+```
+
+For `summary` configuration, you can use event metadata fields in the value of a custom field like this:
+
+```ts
+summary: {
+  fields: [
+    {
+      id: 'registeredAt',
+      label: {
+        defaultMessage: 'Registration date',
+        description: 'This is the label for the registration date',
+        id: 'event.birth.summary.event.registeredAt.label'
+      },
+      value: '{event.legalStatuses.REGISTERED.acceptedAt, date, ::dd MMMM yyyy}'
+    }
+  ]
+}
+```
+
+### Bug fixes
+
+- Fix bug that requires users to log in when offline instead of unlocking with a PIN. [#11243](https://github.com/opencrvs/opencrvs-core/issues/11243)
+
+### Improvements
+
+- Improve BRN lookup experience by making the search field clearer and more intuitive, properly handling base/success/error states, and providing clearer, context-specific error messaging for users. [#11181](https://github.com/opencrvs/opencrvs-core/issues/11181)
+- Extended the `record.registered.print-certified-copies[event=tennis-club-membership]` scope to support an optional `templates` parameter (e.g. `templates=v2.tennis-club-membership-certificate-alpha`). When `templates` is specified, users are restricted to printing only the listed certificate templates. If `templates` is omitted, all certificate templates for the event remain available, preserving existing behavior [#11753](https://github.com/opencrvs/opencrvs-core/issues/11753)
+
+## 1.9.9
+
+### Bug fixes
+
+- Fix E-Signet integration breaking when using “Change” links on the review page [#11603](https://github.com/opencrvs/opencrvs-core/issues/11603)
+
+## 1.9.8
+
+### New features
+
+- Introduced `showParentFieldError` flag in NAME field configuration to consolidate validation error messages at the parent field level (instead of displaying separate errors below firstname, middlename, and surname subfields), improving UX by providing clearer, centralized validation feedback
+
+## 1.9.7
+
+### New features
+
+- In deduplication, the dateRange matcher now supports both `AGE` and `DATE` field.
+- The dateRange matcher supports a new `matchAgainst` option, which can reference either a date field or an age field. When provided, the matcher compares the source field against the specified `matchAgainst` field instead of only matching against itself.
+
+```ts
+field('mother.dob').dateRangeMatches({
+  days: 365,
+  matchAgainst: 'mother.age'
+})
+```
+
+### Bug fixes
+
+- Ensure rejected actions are considered when detecting pending actions. [#11588](https://github.com/opencrvs/opencrvs-core/issues/11588)
+
 ## 1.9.6
 
 ### New features

@@ -63,7 +63,9 @@ import {
   isQrReaderFieldType,
   isLoaderFieldType,
   isAgeFieldType,
-  isNumberWithUnitFieldType
+  isNumberWithUnitFieldType,
+  NameField,
+  EventConfig
 } from '@opencrvs/commons/client'
 import { TextArea } from '@opencrvs/components/lib/TextArea'
 import { InputField } from '@client/components/form/InputField'
@@ -114,6 +116,7 @@ import {
 
 interface GeneratedInputFieldProps<T extends FieldConfig> {
   fieldDefinition: T
+  eventConfig?: EventConfig
   /** non-native onChange. Updates Formik state by updating the value and its dependencies */
   onFieldValueChange: (name: string, value: FieldValue | undefined) => void
   /** Optional callback that is called whenever any field value changes.
@@ -143,6 +146,7 @@ interface GeneratedInputFieldProps<T extends FieldConfig> {
 export const GeneratedInputField = React.memo(
   <T extends FieldConfig>({
     fieldDefinition,
+    eventConfig,
     validatorContext,
     onBlur,
     onFieldValueChange,
@@ -221,10 +225,15 @@ export const GeneratedInputField = React.memo(
 
       return (
         // We are showing errors to underlying text input, so we need to ignore them here
-        <InputField {...omit(field.inputFieldProps, 'error')}>
+        <InputField
+          {...(field.config.configuration?.showParentFieldError
+            ? field.inputFieldProps
+            : omit(field.inputFieldProps, 'error'))}
+        >
           <Name.Input
             configuration={field.config.configuration}
             disabled={disabled}
+            eventConfig={eventConfig}
             id={fieldDefinition.id}
             validation={validation}
             validatorContext={validatorContext}
@@ -726,12 +735,20 @@ export const GeneratedInputField = React.memo(
       )
     }
     if (isSearchFieldType(field)) {
+      const {
+        label: inputLabel,
+        helperText,
+        ...restInputFieldProps
+      } = inputFieldProps
+
       return (
-        <InputField {...inputFieldProps}>
+        <InputField {...restInputFieldProps}>
           <Search.Input
             key={fieldDefinition.id}
             configuration={field.config.configuration}
             form={form}
+            helperText={fieldDefinition.helperText}
+            label={inputLabel}
             value={field.value}
             onChange={(val) => onFieldValueChange(fieldDefinition.id, val)}
           />

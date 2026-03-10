@@ -27,6 +27,9 @@ import {
   fieldConfigsToActionPayload,
   tennisClubMembershipEvent
 } from '../client'
+import { generateActionDocument } from './test.utils'
+
+/* eslint-disable max-lines */
 
 const commonAction = {
   status: 'Requested' as const,
@@ -524,6 +527,48 @@ describe('getPendingAction', () => {
       'Expected exactly one pending action, but found action-id-4, action-id-5'
     )
   })
+
+  it('handles the history having rejected action', () => {
+    const actionSequence = [
+      {
+        type: ActionType.CREATE,
+        status: 'Accepted' as const
+      },
+      {
+        id: 'action-id-2' as UUID,
+        type: ActionType.DECLARE,
+        status: 'Requested' as const
+      },
+      {
+        type: ActionType.DECLARE,
+        status: 'Accepted' as const,
+        originalActionId: 'action-id-2' as UUID
+      },
+      {
+        id: 'action-id-5' as UUID,
+        type: ActionType.REGISTER,
+        status: 'Requested' as const
+      },
+      {
+        type: ActionType.REGISTER,
+        status: 'Rejected' as const,
+        originalActionId: 'action-id-5' as UUID
+      },
+      {
+        type: ActionType.REJECT,
+        status: 'Requested' as const,
+        content: { reason: 'Please reconsider' }
+      }
+    ].map(({ type, ...defaults }) =>
+      generateActionDocument({
+        configuration: tennisClubMembershipEvent,
+        action: type,
+        defaults
+      })
+    )
+    const lastAction = actionSequence[actionSequence.length - 1]
+    expect(getPendingAction(actionSequence)).toMatchObject(lastAction)
+  })
 })
 
 describe('omitHiddenPaginatedFields', () => {
@@ -554,5 +599,36 @@ describe('omitHiddenPaginatedFields', () => {
       'recommender.name', // recommender.none is true
       'recommender.id' // recommender.none is true
     ])
+  })
+
+  it('removes fields that are hidden (but allows hidden fields with null value) by field conditionals when page conditional is true', () => {
+    const rng = createPrng(101)
+
+    const fields = getDeclarationFields(tennisClubMembershipEvent)
+
+    const declarationConfig = getDeclaration(tennisClubMembershipEvent)
+
+    const declaration = fieldConfigsToActionPayload(fields, rng)
+    const declarationWithoutHiddenFields = omitHiddenPaginatedFields(
+      declarationConfig,
+      { ...declaration, 'recommender.name': null, 'recommender.id': null },
+      {},
+      true
+    )
+
+    const missingKeys = difference(
+      Object.keys(declaration),
+      Object.keys(declarationWithoutHiddenFields)
+    )
+
+    expect(missingKeys).toEqual([
+      'applicant.dob', // dobUnknown is true
+      'applicant.isRecommendedByFieldAgent', // user is not field agent
+      'senior-pass.id', // dob is not before the threshhold
+      'senior-pass.recommender' // dob is not before threshhold
+    ])
+
+    expect(missingKeys).not.toContain('recommender.name')
+    expect(missingKeys).not.toContain('recommender.id')
   })
 })

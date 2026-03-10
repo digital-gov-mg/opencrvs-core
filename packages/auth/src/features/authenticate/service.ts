@@ -119,14 +119,17 @@ export async function createToken(
   issuer: string,
   role?: string | number | undefined,
   temporary = false,
-  userType: TokenUserType = TokenUserType.enum.user
+  userType: TokenUserType = TokenUserType.enum.user,
+  expiresInSeconds?: number
 ): Promise<string> {
   return sign({ scope, userType, role }, cert, {
     subject: userId,
     algorithm: 'RS256',
-    expiresIn: temporary
-      ? env.CONFIG_SYSTEM_TOKEN_EXPIRY_SECONDS
-      : env.CONFIG_TOKEN_EXPIRY_SECONDS,
+    expiresIn:
+      expiresInSeconds ??
+      (temporary
+        ? env.CONFIG_SYSTEM_TOKEN_EXPIRY_SECONDS
+        : env.CONFIG_TOKEN_EXPIRY_SECONDS),
     audience,
     issuer
   })
@@ -143,11 +146,16 @@ type LegacyRecordValidationInput = {
 
 export async function createTokenForActionConfirmation(
   input: ActionConfirmationInput | LegacyRecordValidationInput,
-  userId: UUID
+  userId: UUID,
+  userRejectScope: string | undefined = undefined
 ) {
   return sign(
     {
-      scope: ['record.confirm-registration', 'record.reject-registration'],
+      scope: [
+        'record.confirm-registration',
+        'record.reject-registration',
+        userRejectScope
+      ].filter(Boolean),
       eventId: 'eventId' in input ? input.eventId : undefined,
       actionId: 'actionId' in input ? input.actionId : undefined,
       recordId: 'recordId' in input ? input.recordId : undefined,
