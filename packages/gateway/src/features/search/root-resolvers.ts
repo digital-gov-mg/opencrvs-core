@@ -198,22 +198,6 @@ export const resolvers: GQLResolver = {
           console.log('postMetrics took', performance.now() - start, 'ms')
         }
 
-        console.log(
-          'searchEvents returning  :>> ',
-          JSON.stringify({
-            totalItems:
-              (searchResult &&
-                searchResult.body.hits &&
-                searchResult.body.hits.total.value) ||
-              0,
-            results:
-              (searchResult &&
-                searchResult.body.hits &&
-                searchResult.body.hits.hits) ||
-              []
-          })
-        )
-
         return {
           totalItems:
             (searchResult &&

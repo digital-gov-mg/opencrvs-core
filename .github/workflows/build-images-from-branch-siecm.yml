@@ -28,6 +28,7 @@ on:
       - dev-1.8.2
       - dev-1.9.1
       - dev-1.9.6
+      - dev-1.9.11
 
 jobs:
   base:
