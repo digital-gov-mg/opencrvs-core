@@ -30,8 +30,7 @@ fire_trigger() {
     -X POST \
     -H "Authorization: Bearer ${token}" \
     -H "Content-Type: application/json" \
-    -d '{"waitForCompletion": false}' \
-    "${EVENTS_URL%/}/events/reindex"
+    "${EVENTS_URL%/}/events/reindex" &
 }
 
 # Returns the most recent reindex status document whose timestamp >= $2,
