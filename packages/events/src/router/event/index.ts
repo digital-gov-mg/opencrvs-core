@@ -30,6 +30,7 @@ import {
   MarkNotDuplicateActionInput,
   ActionDocument
 } from '@opencrvs/commons/events'
+import { logger } from '@opencrvs/commons'
 import * as middleware from '@events/router/middleware'
 import { EventIdParam } from '@events/router/middleware'
 import { requiresAnyOfScopes } from '@events/router/middleware/authorization'
@@ -352,7 +353,13 @@ export const eventRouter = router({
     .mutation(async ({ input, ctx }) => bulkImportEvents(input, ctx.token)),
   reindex: router({
     trigger: systemProcedure
-      .input(z.void())
+      .input(
+        z
+          .object({
+            waitForCompletion: z.boolean().default(true)
+          })
+          .optional()
+      )
       .use(requiresAnyOfScopes([SCOPES.RECORD_REINDEX]))
       .output(z.void())
       .meta({
@@ -364,7 +371,15 @@ export const eventRouter = router({
           tags: ['events']
         }
       })
-      .mutation(({ ctx }) => reindex(ctx.token)),
+      .mutation(async ({ ctx, input }) => {
+        if (input?.waitForCompletion === false) {
+          void reindex(ctx.token).catch((err) => {
+            logger.error(`Reindex failed ${err.message}`)
+          })
+          return Promise.resolve()
+        }
+        return reindex(ctx.token)
+      }),
     status: systemProcedure
       .meta({
         openapi: {
