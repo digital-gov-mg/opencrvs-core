@@ -774,7 +774,7 @@ paths:
                 - transactionId
                 - type
               default:
-                transactionId: d1e6a65e-7b39-4d93-8836-7eccf8d0e88d
+                transactionId: 9618de18-6363-44ee-bf73-1dd3f835e922
                 type: birth
       responses:
         "200":
@@ -860,7 +860,7 @@ paths:
                 - transactionId
               default:
                 eventId: <event-id-here>
-                transactionId: 49a5dea6-73f1-43fe-9ba4-45997ea0d063
+                transactionId: 6f4c3558-9a75-4b22-86b7-6c9cfddde434
                 declaration: {}
                 annotation: {}
                 type: NOTIFY
@@ -1408,12 +1408,28 @@ paths:
         - events
       security:
         - Authorization: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                waitForCompletion:
+                  type: boolean
+                  default: true
       responses:
         "200":
           description: Successful response
           content:
             application/json:
               schema: {}
+        "400":
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error.BAD_REQUEST"
         "401":
           description: Authorization not provided
           content:
