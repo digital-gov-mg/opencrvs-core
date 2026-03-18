@@ -9,10 +9,8 @@
  * Copyright (C) The OpenCRVS Authors located at https://github.com/opencrvs/opencrvs-core/blob/master/AUTHORS.
  */
 import { Readable, Transform } from 'node:stream'
-import fetch from 'node-fetch'
 import { getUUID, logger, TokenWithBearer } from '@opencrvs/commons'
 import { EventDocument } from '@opencrvs/commons/events'
-import { env } from '@events/environment'
 
 import {
   STREAM_BATCH_SIZE,
@@ -37,7 +35,7 @@ import {
   updateReindexingProgress
 } from './status'
 
-async function reindexBatchToCountryConfig(
+/* async function reindexBatchToCountryConfig(
   token: TokenWithBearer,
   batch: EventDocument[]
 ): Promise<void> {
@@ -55,7 +53,7 @@ async function reindexBatchToCountryConfig(
       `Failed to reindex country config batch: ${response.status} ${response.statusText}`
     )
   }
-}
+} */
 
 async function reindexSearch(
   timestamp: number,
