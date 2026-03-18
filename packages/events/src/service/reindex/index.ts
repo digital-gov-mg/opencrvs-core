@@ -81,8 +81,8 @@ async function reindexSearch(
     logger.info(`Reindexing ${batch.length} events`)
 
     await Promise.all([
-      indexEventsInBulk(batch, configurations, indexNameOverrides),
-      reindexBatchToCountryConfig(token, batch)
+      indexEventsInBulk(batch, configurations, indexNameOverrides)
+      //reindexBatchToCountryConfig(token, batch)
     ])
 
     await onBatchProcessed?.(batch.length)
