@@ -146,30 +146,11 @@ async function* processBatch(batch: Events[]) {
  */
 export async function* streamEventDocuments() {
   const db = getClient()
-  const ignoredIds = new Set([
-    'e90fe489-55b8-43ac-835b-e89b0061febd',
-    '8da5ca26-c1c3-4263-9bfb-5052941e78ce',
-    '66956b36-9d2d-4186-b8ef-10fe608bd7a7',
-    'a0ff0ad8-656c-4704-bde9-24543c0adce6',
-    'aa3a8188-d524-4422-b367-798f83551095',
-    '97e5d734-513f-4f0e-a522-a85a6aba7828',
-    'b225d695-04cb-44f6-b759-8a89b8775f91',
-    'b2b81096-ad3d-4464-843c-7a7a5cf95790',
-    '140ab645-40eb-44eb-9365-7f960c8598e9',
-    'b67c9920-95eb-4eec-a439-c467ee3a99d4',
-    '93be0847-b9cb-4ffb-a828-cb85dbfe1374',
-    '0fed136c-d6c9-4188-8bc7-6913ae904a87',
-    'a2539c85-5e3a-4b7b-89db-d49b0236cdab',
-    'ffde5a60-5d08-4a34-bf02-e40f11288bbb'
-  ])
 
   const eventsStream = db.selectFrom('events').selectAll().stream()
   let batch: Events[] = []
 
   for await (const row of eventsStream) {
-    if (ignoredIds.has(row.id)) {
-      continue
-    }
     batch.push(row)
     if (batch.length === STREAM_BATCH_SIZE) {
       yield* processBatch(batch)
