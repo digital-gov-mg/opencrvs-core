@@ -61,6 +61,9 @@ type Props = OwnProps &
   }>
 
 class ProtectedPageComponent extends React.Component<Props, IProtectPageState> {
+  private isFilePickerOpen = false
+  private filePickerTimer: ReturnType<typeof setTimeout> | null = null
+
   constructor(props: Props) {
     super(props)
     this.state = {
@@ -74,6 +77,7 @@ class ProtectedPageComponent extends React.Component<Props, IProtectPageState> {
     this.handleVisibilityChange = this.handleVisibilityChange.bind(this)
     this.markAsSecured = this.markAsSecured.bind(this)
     this.onIdle = this.onIdle.bind(this)
+    this.handleFileInputClick = this.handleFileInputClick.bind(this)
   }
 
   async componentDidMount() {
@@ -111,9 +115,38 @@ class ProtectedPageComponent extends React.Component<Props, IProtectPageState> {
     setInterval(async () => {
       if (!(await refreshToken())) this.props.redirectToAuthentication()
     }, REFRESH_TOKEN_CHECK_MILLIS)
+
+    document.addEventListener('click', this.handleFileInputClick, true)
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('click', this.handleFileInputClick, true)
+    if (this.filePickerTimer) {
+      clearTimeout(this.filePickerTimer)
+    }
+  }
+
+  handleFileInputClick(e: MouseEvent) {
+    const target = e.target as HTMLElement
+    if (target instanceof HTMLInputElement && target.type === 'file') {
+      this.isFilePickerOpen = true
+      if (this.filePickerTimer) clearTimeout(this.filePickerTimer)
+      this.filePickerTimer = setTimeout(() => {
+        this.isFilePickerOpen = false
+        this.filePickerTimer = null
+      }, 30000)
+    }
   }
 
   async handleVisibilityChange(isVisible: boolean) {
+    if (!isVisible && this.isFilePickerOpen) {
+      this.isFilePickerOpen = false
+      if (this.filePickerTimer) {
+        clearTimeout(this.filePickerTimer)
+        this.filePickerTimer = null
+      }
+      return
+    }
     const alreadyLocked = isVisible || (await storage.getItem(SCREEN_LOCK))
 
     const onUnprotectedPage = this.props.unprotectedRouteElements?.some(
