@@ -699,6 +699,21 @@ export function createFieldConditionals(fieldId: string) {
         }
       })
     },
+    isValidLuhn() {
+      return defineFormConditional({
+        type: 'object',
+        properties: {
+          [fieldId]: wrapToPathOptional(
+            {
+              type: 'string',
+              isValidLuhn: true,
+              description: 'Must pass the Luhn algorithm checksum validation.'
+            },
+            this.$$subfield
+          )
+        }
+      })
+    },
     isValidAdministrativeLeafLevel() {
       const baseCondition = {
         type: 'object',
