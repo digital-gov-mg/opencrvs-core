@@ -171,9 +171,12 @@ function validateDeclarationUpdateAction({
     context
   )
 
-  // 4. When completeDeclaration update has fields that are not in the cleaned declaration, payload is invalid.
+  // 4. When declarationUpdate has fields that are not in the cleaned declaration, payload is invalid.
+  // We check declarationUpdate (client changes only), not completeDeclaration, to avoid false positives
+  // where previousDeclaration had values for conditionally hidden fields (e.g. address with defaultValue
+  // that becomes hidden when addressSameAs = YES).
   const invalidKeys = getInvalidUpdateKeys({
-    update: completeDeclaration,
+    update: declarationUpdate,
     cleaned: cleanedDeclaration
   })
 

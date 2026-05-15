@@ -212,6 +212,7 @@ export const SearchResultComponent = ({
 }>) => {
   const { slug } = useTypedParams(ROUTES.V2.WORKQUEUES.WORKQUEUE)
   const intl = useIntl()
+  window.__localeId__ = intl.locale
   const navigate = useNavigate()
   const { width: windowWidth } = useWindowSize()
   const theme = useTheme()
