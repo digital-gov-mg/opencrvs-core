@@ -18,6 +18,7 @@ import { NavigationGroup } from '@opencrvs/components/lib/SideNavigation/Navigat
 import { NavigationItem } from '@opencrvs/components/lib/SideNavigation/NavigationItem'
 import { usePermissions } from '@client/hooks/useAuthorization'
 import { ROUTES } from '@client/v2-events/routes'
+import { VS_EXPORTS } from '@client/navigation/routes'
 
 /**
  * Based on packages/client/src/components/interface/Navigation.tsx
@@ -56,6 +57,20 @@ export function PerformanceNavigationGroup({
               })}
             </>
           }
+        </NavigationGroup>
+      )}
+      {hasScope(SCOPES.PERFORMANCE_EXPORT_VITAL_STATISTICS) && (
+        <NavigationGroup>
+          <NavigationItem
+            icon={() => <Icon name="ChartBar" size="small" />}
+            id="navigation_vsexports"
+            isSelected={window.location.pathname === VS_EXPORTS}
+            label={intl.formatMessage({
+              id: 'navigation.reports',
+              defaultMessage: 'Vital statistics'
+            })}
+            onClick={() => navigate(VS_EXPORTS)}
+          />
         </NavigationGroup>
       )}
     </>

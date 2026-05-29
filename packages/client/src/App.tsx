@@ -72,6 +72,7 @@ import AllUserEmail from './views/SysAdmin/Communications/AllUserEmail/AllUserEm
 import { SystemList } from './views/SysAdmin/Config/Systems/Systems'
 import { UserList } from './views/SysAdmin/Team/user/UserList'
 import VSExport from './views/SysAdmin/Vsexports/VSExport'
+import { VsExportV2Page } from './views/SysAdmin/Vsexports/VsExportV2Page'
 import { UserAudit } from './views/UserAudit/UserAudit'
 import { config } from './config'
 
@@ -387,7 +388,7 @@ export const routesConfig = turnOffV2Events
               <ProtectedRoute
                 scopes={[SCOPES.PERFORMANCE_EXPORT_VITAL_STATISTICS]}
               >
-                <VSExport />
+                <VsExportV2Page />
               </ProtectedRoute>
             )
           },

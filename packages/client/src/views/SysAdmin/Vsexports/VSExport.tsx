@@ -60,7 +60,7 @@ async function downloadURI(uri: string, name: string) {
     })
 }
 
-const VSExport = () => {
+const VSExport = ({ isV2 = false }: { isV2?: boolean }) => {
   const intl = useIntl()
   const [activeTabId, setActiveTabId] = React.useState(EventType.Birth)
   const [documentDownloadError, setDocumentDownloadError] =
@@ -159,6 +159,7 @@ const VSExport = () => {
         hideBackground={true}
         isCertificatesConfigPage={true}
         headerTitle={intl.formatMessage(messages.vsexport)}
+        isHidden={isV2}
       >
         <UserTable id="vsexport_list">
           <Content

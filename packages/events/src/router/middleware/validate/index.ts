@@ -175,8 +175,10 @@ function validateDeclarationUpdateAction({
   // We check declarationUpdate (client changes only), not completeDeclaration, to avoid false positives
   // where previousDeclaration had values for conditionally hidden fields (e.g. address with defaultValue
   // that becomes hidden when addressSameAs = YES).
+  // deepDropNulls mirrors what completeDeclaration does — null values mean "no value" and must not
+  // trigger hidden field errors.
   const invalidKeys = getInvalidUpdateKeys({
-    update: declarationUpdate,
+    update: deepDropNulls(declarationUpdate) as typeof cleanedDeclaration,
     cleaned: cleanedDeclaration
   })
 

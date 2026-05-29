@@ -350,6 +350,46 @@ export const eventRouter = router({
     .input(z.array(EventDocument))
     .output(z.any())
     .mutation(async ({ input, ctx }) => bulkImportEvents(input, ctx.token)),
+  myRegistrations: systemProcedure
+    .use(requiresAnyOfScopes([SCOPES.PERFORMANCE_EXPORT_VITAL_STATISTICS]))
+    .input(
+      z.object({
+        gte: z.string().datetime().optional(),
+        eventType: z.string().optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        offset: z.number().int().min(0).optional()
+      })
+    )
+    .output(
+      z.object({
+        results: z.array(EventIndex),
+        total: z.number()
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const eventConfigs = await getInMemoryEventConfigurations(ctx.token)
+      const userId = ctx.user.id
+      const allAccess = Object.fromEntries(
+        eventConfigs.map(({ id }) => [id, 'all' as const])
+      )
+      const clauses = [
+        { createdBy: { type: 'exact' as const, term: userId } },
+        ...(input.gte
+          ? [{ createdAt: { type: 'range' as const, gte: input.gte } }]
+          : []),
+        ...(input.eventType ? [{ eventType: input.eventType }] : [])
+      ]
+      return findRecordsByQuery(
+        {
+          query: { type: 'and', clauses },
+          limit: input.limit ?? 100,
+          offset: input.offset ?? 0
+        },
+        eventConfigs,
+        allAccess,
+        undefined
+      )
+    }),
   reindex: router({
     trigger: systemProcedure
       .input(z.void())
