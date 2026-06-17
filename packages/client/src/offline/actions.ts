@@ -266,6 +266,13 @@ export const certificatesLoaded = (
   payload
 })
 
+export const certificatesLoadFailed = (
+  error: Error
+): CertificatesLoadFailedAction => ({
+  type: CERTIFICATES_LOAD_FAILED,
+  payload: error
+})
+
 export const configFailed = (error: Error): ApplicationConfigFailedAction => ({
   type: APPLICATION_CONFIG_FAILED,
   payload: error
