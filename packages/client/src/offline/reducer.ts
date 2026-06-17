@@ -399,6 +399,8 @@ function reducer(
       const { certificates, config, systems } = action.payload
       merge(window.config, config)
 
+      const cachedCertificates = state.offlineData.templates?.certificates ?? []
+
       const newOfflineData = {
         ...state.offlineData,
         config,
@@ -420,7 +422,14 @@ function reducer(
                 ])
               )
             }
-            return x
+            // Preserve cached SVG and hash to avoid a spinner while re-fetching.
+            // svg is typed as required on ICertificateData but will be filled by loadCertificates.
+            const cached = cachedCertificates.find((c) => c.id === x.id)
+            return {
+              ...x,
+              ...(cached?.svg && { svg: cached.svg }),
+              ...(cached?.hash && { hash: cached.hash })
+            } as ICertificateData
           })
         }
       }
@@ -433,8 +442,17 @@ function reducer(
         },
         Cmd.run(loadCertificates, {
           successActionCreator: actions.certificatesLoaded,
+          failActionCreator: actions.certificatesLoadFailed,
           args: [newOfflineData.templates?.certificates]
         })
+      )
+    }
+
+    case actions.CERTIFICATES_LOAD_FAILED: {
+      // SVG fetches failed — keep existing certificates (with their cached SVGs) and retry
+      return loop(
+        state,
+        delay(CONFIG_CMD, RETRY_TIMEOUT)
       )
     }
 
