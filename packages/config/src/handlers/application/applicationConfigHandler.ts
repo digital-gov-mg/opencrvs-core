@@ -73,7 +73,7 @@ async function getCertificatesConfig(
 
   const templateIds = printCertifiedCopiesScope.options.templates ?? []
   const url = new URL(`/certificates`, env.COUNTRY_CONFIG_URL).toString()
-
+ // add compress: false to the fetch request
   const res = await fetch(url, {
     method: 'GET',
     compress: false,
