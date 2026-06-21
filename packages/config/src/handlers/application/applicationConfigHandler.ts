@@ -76,6 +76,7 @@ async function getCertificatesConfig(
 
   const res = await fetch(url, {
     method: 'GET',
+    compress: false,
     headers: { Authorization: `Bearer ${authToken}` }
   })
 
@@ -104,7 +105,7 @@ async function getConfigFromCountry(authToken?: string) {
   const url = new URL('application-config', env.COUNTRY_CONFIG_URL).toString()
   logger.info(`getConfigFromCountry: fetching ${url}`)
 
-  const res = await fetch(url)
+  const res = await fetch(url, { compress: false })
   logger.info(
     `getConfigFromCountry: received status=${res.status} content-type=${res.headers.get('content-type')} content-encoding=${res.headers.get('content-encoding')}`
   )
