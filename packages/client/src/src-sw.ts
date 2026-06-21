@@ -17,7 +17,6 @@ import {
 import { registerRoute, NavigationRoute } from 'workbox-routing'
 import { NetworkFirst, CacheFirst } from 'workbox-strategies'
 import { clientsClaim } from 'workbox-core'
-import { ExpirationPlugin } from 'workbox-expiration'
 import { MINIO_REGEX } from '@opencrvs/commons/client'
 
 self.__WB_DISABLE_DEV_LOGS = true
@@ -59,18 +58,7 @@ registerRoute(/http(.+)config\.js$/, new NetworkFirst())
 // This caches the certificate config file fetched from country config
 registerRoute(/http(.+)certificate-configuration$/, new NetworkFirst())
 // This caches font files fetched from country config
-registerRoute(
-  /http(.+)fonts\/.*\.ttf$/,
-  new CacheFirst({
-    cacheName: 'fonts-cache',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 20,
-        maxAgeSeconds: 60 * 60 * 24 * 365
-      })
-    ]
-  })
-)
+registerRoute(/http(.+)fonts\/.*\.ttf$/, new NetworkFirst())
 // This caches validations fetched from country config
 registerRoute(/http(.+)validators\.js$/, new NetworkFirst())
 // This caches handlebars fetched from country config
