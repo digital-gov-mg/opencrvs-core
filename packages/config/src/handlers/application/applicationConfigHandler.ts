@@ -102,12 +102,24 @@ async function getCertificatesConfig(
 
 async function getConfigFromCountry(authToken?: string) {
   const url = new URL('application-config', env.COUNTRY_CONFIG_URL).toString()
+  logger.info(`getConfigFromCountry: fetching ${url}`)
 
   const res = await fetch(url)
+  logger.info(
+    `getConfigFromCountry: received status=${res.status} content-type=${res.headers.get('content-type')} content-encoding=${res.headers.get('content-encoding')}`
+  )
   if (!res.ok) {
     throw new Error(`Expected to get the application config from ${url}`)
   }
-  return res.json()
+  const text = await res.text()
+  try {
+    return JSON.parse(text)
+  } catch (ex) {
+    logger.error(
+      `getConfigFromCountry: JSON.parse failed — body preview: ${text.slice(0, 300)}`
+    )
+    throw ex
+  }
 }
 
 async function getApplicationConfig(
@@ -130,16 +142,22 @@ export async function getLoginConfigHandler(
   request: Hapi.Request,
   h: Hapi.ResponseToolkit
 ) {
-  const refineConfigResponse = pick(await getApplicationConfig(), [
-    'APPLICATION_NAME',
-    'COUNTRY_LOGO',
-    'PHONE_NUMBER_PATTERN',
-    'LOGIN_BACKGROUND',
-    'USER_NOTIFICATION_DELIVERY_METHOD',
-    'INFORMANT_NOTIFICATION_DELIVERY_METHOD',
-    'ADVANCED_FRONTEND_CUSTOMIZATIONS'
-  ])
-  return { config: refineConfigResponse }
+  try {
+    const refineConfigResponse = pick(await getApplicationConfig(), [
+      'APPLICATION_NAME',
+      'COUNTRY_LOGO',
+      'PHONE_NUMBER_PATTERN',
+      'LOGIN_BACKGROUND',
+      'USER_NOTIFICATION_DELIVERY_METHOD',
+      'INFORMANT_NOTIFICATION_DELIVERY_METHOD',
+      'ADVANCED_FRONTEND_CUSTOMIZATIONS'
+    ])
+    return { config: refineConfigResponse }
+  } catch (ex) {
+    logger.error(`getLoginConfigHandler error: ${(ex as Error).message}`)
+    logger.error(ex)
+    throw ex
+  }
 }
 
 const searchCriteria = [
