@@ -10,6 +10,9 @@
  */
 import nodeFetch from 'node-fetch'
 
-export default function fetch(...params: Parameters<typeof nodeFetch>) {
-  return nodeFetch(...params)
+export default function fetch(
+  url: Parameters<typeof nodeFetch>[0],
+  init?: Parameters<typeof nodeFetch>[1]
+) {
+  return nodeFetch(url, { compress: false, ...init })
 }
