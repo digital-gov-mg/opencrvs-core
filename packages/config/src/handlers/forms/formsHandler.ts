@@ -34,6 +34,7 @@ export default async function getForm(
   const token = request.headers.authorization
   const url = new URL('forms', env.COUNTRY_CONFIG_URL)
   const response = await fetch(url, {
+    compress: false,
     headers: {
       Authorization: token
     }

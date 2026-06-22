@@ -18,7 +18,7 @@ export default async function getDashboardQueries(
   h: Hapi.ResponseToolkit
 ) {
   const url = new URL('dashboards/queries.json', env.COUNTRY_CONFIG_URL)
-  const response = await fetch(url)
+  const response = await fetch(url, { compress: false })
 
   if (response.status === 404) {
     return defaultQueries()
