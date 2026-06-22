@@ -38,7 +38,8 @@ export class NotFound extends Error {
 export async function fetchJSON<ResponseType = any>(
   ...params: Parameters<typeof nodeFetch>
 ) {
-  const res = await nodeFetch(...params)
+  const [url, init] = params
+  const res = await nodeFetch(url, { compress: false, ...init })
 
   if (!res.ok) {
     if (res.status === 404) {

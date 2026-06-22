@@ -34,6 +34,7 @@ let inMemoryWorkqueueConfigurations: WorkqueueConfig[] | null = null
 
 export async function getEventConfigurations(token: TokenWithBearer) {
   const res = await fetch(new URL('/events', env.COUNTRY_CONFIG_URL), {
+    compress: false,
     headers: {
       'Content-Type': 'application/json',
       Authorization: token
@@ -97,6 +98,7 @@ export async function getEventConfigurationById({
 
 async function getWorkqueueConfigurations(token: TokenWithBearer) {
   const res = await fetch(new URL('/workqueue', env.COUNTRY_CONFIG_URL), {
+    compress: false,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`

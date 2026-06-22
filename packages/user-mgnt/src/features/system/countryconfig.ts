@@ -45,6 +45,7 @@ async function getEventConfigurations(authorization: string) {
   const url = joinUrl(env.COUNTRY_CONFIG_URL, '/events')
 
   const res = await fetch(url, {
+    compress: false,
     headers: {
       'Content-Type': 'application/json',
       Authorization: authorization
