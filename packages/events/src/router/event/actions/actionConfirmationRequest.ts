@@ -55,6 +55,7 @@ export async function requestActionConfirmation(
   try {
     const res = await fetch(actionConfirmationUrl, {
       method: 'POST',
+      compress: false,
       body: JSON.stringify(event),
       headers: {
         'Content-Type': 'application/json',
