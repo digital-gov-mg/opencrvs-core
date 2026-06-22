@@ -19,7 +19,7 @@ export class OpenCRVSRESTDataSource extends RESTDataSource {
 
   override willSendRequest(_path: string, request: AugmentedRequest) {
     const { authorization } = this.context.request.headers
-    request.headers = { authorization }
+    request.headers = { authorization, 'Accept-Encoding': 'identity' }
   }
 
   override didEncounterError(error: Error) {
