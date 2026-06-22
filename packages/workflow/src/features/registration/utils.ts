@@ -47,6 +47,7 @@ async function getTrackingIdFromCountryConfig(
 ): Promise<string | null> {
   return fetch(new URL('/tracking-id', COUNTRY_CONFIG_URL).toString(), {
     method: 'POST',
+    compress: false,
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-type': 'application/json'
