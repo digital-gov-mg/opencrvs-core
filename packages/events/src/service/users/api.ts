@@ -48,6 +48,7 @@ export async function getUser(
 ): Promise<UserAPIResult> {
   const res = await fetch(joinUrl(env.USER_MANAGEMENT_URL, 'getUser').href, {
     method: 'POST',
+    compress: false,
     body: JSON.stringify({ userId }),
     headers: {
       'Content-Type': 'application/json',
@@ -81,6 +82,7 @@ export async function getSystem(
 ): Promise<SystemAPIResult> {
   const res = await fetch(joinUrl(env.USER_MANAGEMENT_URL, 'getSystem').href, {
     method: 'POST',
+    compress: false,
     body: JSON.stringify({ systemId }),
     headers: {
       'Content-Type': 'application/json',
