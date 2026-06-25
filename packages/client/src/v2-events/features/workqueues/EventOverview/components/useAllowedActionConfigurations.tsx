@@ -560,6 +560,31 @@ export function useAllowedActionConfigurations(
     .map((a) => ({ ...config[a], type: a }))
     .filter((a: ActionConfig) => !a.hidden)
 
+  // Check if the user can perform any action other than READ, ASSIGN, or UNASSIGN
+  const hasOnlyMetaActions = allowedWorkqueueConfigs.every(({ type }) =>
+    isMetaAction(type)
+  )
+
+  if (hasOnlyMetaActions) {
+    // Check if the user has scope for at least one non-meta action (e.g. VALIDATE, REGISTER).
+    // If yes, the meta-only state is due to a flag (e.g. validate:requested) blocking actions,
+    // not a missing scope — so ASSIGN/UNASSIGN should still be shown to allow recovery.
+    // If no, the user genuinely cannot act on this event (e.g. FIELD_AGENT on a DECLARED event)
+    // and should only see READ.
+    const hasNonMetaActionInScope = Object.values(ActionType)
+      .filter((a) => !isMetaAction(a))
+      .some((a) => isActionAllowed(a))
+
+    if (!hasNonMetaActionInScope) {
+      return [
+        modals,
+        [{ ...config[ActionType.READ], type: ActionType.READ }].filter(
+          (a: ActionConfig) => !a.hidden
+        )
+      ] satisfies [React.ReactNode, ActionMenuItem[]]
+    }
+  }
+
   return [modals, allowedWorkqueueConfigs] satisfies [
     React.ReactNode,
     ActionMenuItem[]
