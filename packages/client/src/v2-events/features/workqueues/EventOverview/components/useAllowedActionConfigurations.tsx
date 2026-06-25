@@ -560,31 +560,6 @@ export function useAllowedActionConfigurations(
     .map((a) => ({ ...config[a], type: a }))
     .filter((a: ActionConfig) => !a.hidden)
 
-  // Check if the user can perform any action other than READ, ASSIGN, or UNASSIGN
-  const hasOnlyMetaActions = allowedWorkqueueConfigs.every(({ type }) =>
-    isMetaAction(type)
-  )
-
-  // If user has no other allowed actions, return only READ (and UNASSIGN if assigned).
-  // This prevents users from assigning themselves to events they cannot work on,
-  // while still allowing them to unassign from events they are already assigned to
-  // (e.g. when an action is stuck in "Requested" state due to a transient error).
-  if (hasOnlyMetaActions) {
-    const unassignAction = allowedWorkqueueConfigs.find(
-      (c) => c.type === ActionType.UNASSIGN
-    )
-    return [
-      modals,
-      [
-        ...(unassignAction ? [unassignAction] : []),
-        {
-          ...config[ActionType.READ],
-          type: ActionType.READ
-        }
-      ].filter((a: ActionConfig) => !a.hidden)
-    ] satisfies [React.ReactNode, ActionMenuItem[]]
-  }
-
   return [modals, allowedWorkqueueConfigs] satisfies [
     React.ReactNode,
     ActionMenuItem[]
